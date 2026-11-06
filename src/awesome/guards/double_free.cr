@@ -16,8 +16,9 @@
 # any assignment to the variable anywhere between the calls (including
 # inside blocks and nested expressions) suppresses the issue.
 class Awesome::Guards::DoubleFree < Awesome::Guard
-  KIND  = "memory"
-  LEVEL = "vibecoder" # undefined behaviour, not a style nit
+  KIND     = "memory"
+  LEVEL    = "vibecoder" # undefined behaviour, not a style nit
+  SEVERITY = "bug"       # runtime-breaker: the C heap gets corrupted
   SHORT_DESCRIPTION = <<-TEXT
     Checks that a pointer is not passed to a lib-shim deallocator twice
     without a reassignment in between. `LibC.free(ptr)` followed by

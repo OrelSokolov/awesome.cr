@@ -100,7 +100,7 @@ module Awesome::CLI
       end
     end
     guards.each do |g|
-      puts "#{g.name} (#{g.kind}, #{g.level})".colorize.bold
+      puts "#{g.name} (#{g.kind}, #{g.level}, #{g.severity})".colorize.bold
       puts wrap(g.short_description, indent: "  ")
       puts "  Good example:"
       puts indent(g.good_example, "    ")
@@ -146,7 +146,7 @@ module Awesome::CLI
       if excerpt = issue.excerpt
         puts "> #{excerpt}".colorize.light_gray
       end
-      puts "[#{issue.guard}] #{issue.message}".colorize.light_yellow
+      puts "[#{issue.guard}] #{issue.message}".colorize(severity_color(issue.guard))
       puts if issue.excerpt
     end
     count = report.issues.size
@@ -161,6 +161,20 @@ module Awesome::CLI
 
   private def self.split_list(value : String) : Array(String)
     value.split(',').map(&.strip).reject(&.empty?)
+  end
+
+  # Severity → report color: bugs light red, warnings light yellow
+  # (the historical one), style nits light magenta.
+  SEVERITY_COLORS = {
+    "bug"     => :light_red,
+    "warning" => :light_yellow,
+    "style"   => :light_magenta,
+  }
+
+  private def self.severity_color(guard_name : String)
+    severity = Awesome::Guard.all.find { |g| g.name == guard_name }
+      .try(&.severity) || Awesome::Guard::DEFAULT_SEVERITY
+    SEVERITY_COLORS[severity]? || :light_yellow
   end
 
   private def self.usage_error(message : String, parser : OptionParser) : Int32

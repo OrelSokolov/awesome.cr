@@ -14,8 +14,9 @@
 # stdlib's `LibC`) are still tracked via the `Lib`-prefix naming
 # convention; non-lib receivers (`Foo.malloc`) are never flagged.
 class Awesome::Guards::MemoryLeak < Awesome::Guard
-  KIND  = "memory"
-  LEVEL = "vibecoder" # a certain leak, not a style nit
+  KIND     = "memory"
+  LEVEL    = "vibecoder" # a certain leak, not a style nit
+  SEVERITY = "bug"       # runtime-breaker: the memory can only leak
   SHORT_DESCRIPTION = <<-TEXT
     Checks that C heap allocations from lib shims are paired with a
     matching free. `LibFoo.malloc` / `LibC.calloc` and friends return

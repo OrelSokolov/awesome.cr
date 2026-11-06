@@ -58,6 +58,15 @@ Your code is awful: 1 issue.
 
 Exit status: `0` — awesome, `1` — awful, `2` — error. CI-ready.
 
+Issues are colored by **severity** — how serious a finding is:
+
+- **bug** (red) — the code is broken at runtime: leaked or double-freed
+  C memory, undefined behaviour.
+- **warning** (yellow) — a real problem worth fixing: wasted
+  allocations, O(n) traps, eager work.
+- **style** (magenta) — design/idiom nits (smells): the code works, it
+  just reads worse.
+
 ## Check levels
 
 Every guard has a **level** — how much it asks of your code. The level
@@ -161,6 +170,7 @@ A guard is a class in `src/awesome/guards/`:
 class Awesome::Guards::MyGuard < Awesome::Guard
   KIND              = "speed" # or "memory", "smell"
   LEVEL             = "senior" # or "vibecoder", "psycho" (senior is the default)
+  SEVERITY          = "warning" # or "bug", "style" (warning by default; smell kind → style)
   SHORT_DESCRIPTION = "..."
   GOOD_EXAMPLE      = "..."
   BAD_EXAMPLE       = "..."

@@ -7,6 +7,7 @@
 #   class Awesome::Guards::MyGuard < Awesome::Guard
 #     KIND              = "speed" # or "memory", "smell"
 #     LEVEL             = "senior" # or "vibecoder", "psycho"
+#     SEVERITY          = "warning" # or "bug", "style"
 #     SHORT_DESCRIPTION = "..."
 #     GOOD_EXAMPLE      = "..."
 #     BAD_EXAMPLE       = "..."
@@ -67,6 +68,28 @@ abstract class Awesome::Guard
 
   def self.level_index : Int32
     LEVELS.index(level) || LEVELS.index(DEFAULT_LEVEL).not_nil!
+  end
+
+  # Severities, from most to least serious. They pick the color of the
+  # report line: red for bugs, yellow for warnings, magenta for style.
+  SEVERITIES       = {"bug", "warning", "style"}
+  DEFAULT_SEVERITY = "warning"
+
+  # How serious a finding is — orthogonal to LEVEL (how much a guard
+  # asks of the code) and to KIND (which command runs it):
+  #
+  #   bug     — the code is broken at runtime: leaked or double-freed
+  #             C memory, undefined behaviour
+  #   warning — a real problem worth fixing: wasted allocations,
+  #             O(n) traps, eager work
+  #   style   — design/idiom nits (smells): the code works, it just
+  #             reads worse
+  #
+  # Defaults by kind: smell guards are style, everything else is a
+  # warning; runtime-breakers set SEVERITY = "bug" explicitly.
+  def self.severity : String
+    sev = {{ @type.constant(:SEVERITY) }} || (kind == "smell" ? "style" : DEFAULT_SEVERITY)
+    SEVERITIES.includes?(sev) ? sev : DEFAULT_SEVERITY
   end
 
   def self.short_description : String

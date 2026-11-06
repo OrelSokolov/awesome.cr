@@ -12,6 +12,24 @@ describe Awesome::Guard do
       Awesome::Guard.all.find { |g| g.name == name }.not_nil!.kind.should eq("memory")
     end
   end
+
+  it "classifies guards by severity" do
+    severity_of = ->(name : String) do
+      Awesome::Guard.all.find { |g| g.name == name }.not_nil!.severity
+    end
+    {"MemoryLeak", "DoubleFree"}.each do |name|
+      severity_of.call(name).should eq("bug")
+    end
+    # Smell guards default to style.
+    {"HardcodedDependency", "GodClass", "DeepInheritance"}.each do |name|
+      severity_of.call(name).should eq("style")
+    end
+    # Everything else defaults to warning.
+    {"MapFlatten", "StructurePacking", "FileReadLines"}.each do |name|
+      severity_of.call(name).should eq("warning")
+    end
+    Awesome::Guard::DEFAULT_SEVERITY.should eq("warning")
+  end
 end
 
 describe Awesome::Runner do
