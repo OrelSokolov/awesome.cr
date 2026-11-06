@@ -89,6 +89,14 @@ $ crystal spec        # run the test suite
 $ crystal build bin/awesome.cr
 ```
 
+[examples/awful/](examples/awful) is a live demo: the bad snippet of
+every guard, one file per guard. `crystal spec` asserts each guard
+fires on it exactly once; run the binary to see the report:
+
+```console
+$ bin/awesome examples/awful
+```
+
 A guard is a class in `src/awesome/guards/`:
 
 ```crystal
