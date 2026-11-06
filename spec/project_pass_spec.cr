@@ -7,11 +7,11 @@ require "file_utils"
 # assertions that need it and unregisters in ensure, so the rest of the
 # suite never sees it.
 class EmptyGuard < Awesome::Guard
-  KIND = "smell"
+  KIND = "code"
 end
 
 class ProjectProbeGuard < Awesome::Guard
-  KIND = "smell"
+  KIND = "code"
   class_property calls = [] of Array(String)
 
   def test_project(sources : Array(Awesome::Source), config : Awesome::GuardConfig) : Array(Awesome::Issue)

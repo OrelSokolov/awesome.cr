@@ -21,7 +21,7 @@
 # `default` — it carries a value, not a branch (config readers pass
 # both literals legitimately).
 class Awesome::Guards::BoolFlagParameter < Awesome::Guard
-  KIND = "smell"
+  KIND = "code"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for Bool parameters that call sites feed with both literal
     true and literal false — a method doing two jobs, named by its

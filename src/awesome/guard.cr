@@ -5,7 +5,7 @@
 # truth), shown by `awesome doc` and mirrored in docs/guards/:
 #
 #   class Awesome::Guards::MyGuard < Awesome::Guard
-#     KIND              = "speed" # or "memory", "smell"
+  #     KIND              = "speed" # or "memory", "code"
 #     LEVEL             = "senior" # or "vibecoder", "psycho"
 #     SEVERITY          = "warning" # or "bug", "style"
 #     SHORT_DESCRIPTION = "..."
@@ -35,8 +35,8 @@ abstract class Awesome::Guard
   end
 
   # The kind of problem a guard looks for — "speed", "memory" or
-  # "smell". Selects the guard set for `awesome speed` /
-  # `awesome memory` / `awesome smell`; "all" (the fallback for guards
+  # "code". Selects the guard set for `awesome speed` /
+  # `awesome memory` / `awesome code`; "all" (the fallback for guards
   # without a KIND) always runs.
   def self.kind : String
     {{ @type.constant(:KIND) || "all" }}
@@ -85,10 +85,10 @@ abstract class Awesome::Guard
   #   style   — design/idiom nits (smells): the code works, it just
   #             reads worse
   #
-  # Defaults by kind: smell guards are style, everything else is a
+  # Defaults by kind: code guards are style, everything else is a
   # warning; runtime-breakers set SEVERITY = "bug" explicitly.
   def self.severity : String
-    sev = {{ @type.constant(:SEVERITY) }} || (kind == "smell" ? "style" : DEFAULT_SEVERITY)
+    sev = {{ @type.constant(:SEVERITY) }} || (kind == "code" ? "style" : DEFAULT_SEVERITY)
     SEVERITIES.includes?(sev) ? sev : DEFAULT_SEVERITY
   end
 

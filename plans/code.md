@@ -1,10 +1,10 @@
-# Plan: группа `smell` — design-smell guard'ы
+# Plan: группа `code` — design-smell guard'ы
 
 Status: реализовано полностью — все 5 guard'ов (спеки, доки
-`docs/guards/`, примеры `examples/awful/`), самопрогон `awesome smell`
+`docs/guards/`, примеры `examples/awful/`), самопрогон `awesome code`
 на этом репо чист.
 
-Группа `smell` — третий вид проверок после `speed` и `memory`: не
+Группа `code` — третий вид проверок после `speed` и `memory`: не
 производительность, а design-smell'и — механически проверяемые признаки
 плохой структуры кода. Происхождение группы — вопрос «можно ли проверять
 SOLID»: честный ответ — целиком нет. Из пяти букв механически видны полторы:
@@ -15,7 +15,7 @@ SOLID»: честный ответ — целиком нет. Из пяти бу
 - **O** (Open/Closed) — видно только в истории коммитов, не в снапшоте кода
 - **I** (Interface Segregation) — требует семантики вызовов
 
-Поэтому группа называется `smell`, а не `solid`: каждый guard детектирует
+Поэтому группа называется `code`, а не `solid`: каждый guard детектирует
 конкретный факт (порог, анти-паттерн), а не «нарушение принципа» — и не
 обещает того, что в AST не видно. Общие правила группы — как у всех guard'ов
 awesome: лучше false negative, чем false positive.
@@ -27,10 +27,10 @@ awesome: лучше false negative, чем false positive.
 
 ## Wiring группы
 
-- `CLI::COMMANDS` + banner + kind-фильтр: `awesome smell [paths]`
+- `CLI::COMMANDS` + banner + kind-фильтр: `awesome code [paths]`
   (`src/awesome/cli.cr`).
 - `README.md`: строка в usage, группа в таблице guard'ов.
-- Каждый guard: `src/awesome/guards/<name>.cr` (KIND = `"smell"`, константы
+- Каждый guard: `src/awesome/guards/<name>.cr` (KIND = `"code"`, константы
   `SHORT_DESCRIPTION` / `GOOD_EXAMPLE` / `BAD_EXAMPLE`), спека в `spec/`,
   док `docs/guards/<name>.md`, пример в `examples/awful/<name>.cr`
   (один файл на guard — конвенция AGENTS.md).
@@ -102,7 +102,7 @@ Smell: наследование ради кода, а не полиморфиз�
 2. Per-file: `HardcodedDependency`, `GodClass`.
 3. Per-project: `DeepInheritance`, `SingleSubclass`, `SubclassNoOverride`.
 4. После каждого этапа: `crystal spec`, самопрогон
-   `crystal run src/awesome.cr -- smell src`, `doc <Guard>` глазами.
+   `crystal run src/awesome.cr -- code src`, `doc <Guard>` глазами.
 
 ## Кандидаты на потом (вне scope плана)
 

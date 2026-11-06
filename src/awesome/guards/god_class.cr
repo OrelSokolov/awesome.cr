@@ -13,7 +13,7 @@
 # deliberately high — the guard should point at outliers, not at
 # ordinary classes.
 class Awesome::Guards::GodClass < Awesome::Guard
-  KIND = "smell"
+  KIND = "code"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for classes carrying too many responsibilities, measured by
     two proxy metrics: number of methods (default 25) and number of

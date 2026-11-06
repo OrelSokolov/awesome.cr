@@ -13,7 +13,7 @@
 # Exception hierarchies and whitelisted stdlib bases are exempt: deep
 # error taxonomies are normal.
 class Awesome::Guards::DeepInheritance < Awesome::Guard
-  KIND = "smell"
+  KIND = "code"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for inheritance chains three or more levels deep
     (configurable). Every level adds contracts the levels below must

@@ -1,17 +1,17 @@
-# Plan: design-smell guards (group `smell`) and per-project analysis
+# Plan: design-smell guards (group `code`) and per-project analysis
 
 Status: реализовано полностью — каркас (`test_project`, `Awesome::Index`,
-CLI-группа `smell`) и все guard'ы: per-file `HardcodedDependency`,
+CLI-группа `code`) и все guard'ы: per-file `HardcodedDependency`,
 `GodClass`; per-project `DeepInheritance`, `SingleSubclass`,
-`SubclassNoOverride`. Каталог самих guard'ов группы `smell` — в
-[smell.md](smell.md); здесь — per-project часть: контракт
+`SubclassNoOverride`. Каталог самих guard'ов группы `code` — в
+[code.md](code.md); здесь — per-project часть: контракт
 `test_project`, Index и правила работы с внешними родителями.
 
 Исходный вопрос был «можно ли добавить проверки SOLID». Честный разбор по
 буквам: **D** (Dependency Inversion) детектируется чисто механически, **S** —
 только через прокси-метрики (GodClass), **L** — пара узких случаев, **O** и
 **I** требуют того, чего в синтаксическом AST нет (история изменений и
-семантика вызовов). Поэтому группа называется `smell`, а не `solid` — не
+семантика вызовов). Поэтому группа называется `code`, а не `solid` — не
 обещаем того, что не проверяем. Как и у существующих guard'ов, принцип:
 детектируем факт, а не мнение; не видим — молчим (лучше false negative,
 чем false positive).
@@ -40,7 +40,7 @@ guard'а оба метода: `test` по-прежнему по одному sou
 один раз со всем набором. Issues у per-project guard'ов всё равно привязаны
 к `файл:строка` (определение subclass'а), `Report` не меняется.
 
-`awesome smell [paths]` — третья команда-фильтр: `"smell"` в `COMMANDS`,
+`awesome code [paths]` — третья команда-фильтр: `"code"` в `COMMANDS`,
 banner и `kind`-фильтр в `CLI.check` (`src/awesome/cli.cr`).
 
 ## Index — синтаксический индекс проекта
@@ -148,12 +148,12 @@ Whitelist stdlib-баз, наследование от которых легит
 
 ## Wiring
 
-1. `CLI`: `"smell"` в `COMMANDS`, banner, `check`-фильтр.
+1. `CLI`: `"code"` в `COMMANDS`, banner, `check`-фильтр.
 2. `Guard`: не-abstract `test`/`test_project` c пустыми базовыми телами;
    `Runner` — цикл `test_project` после per-file прохода (guard'ы с kind
-   `smell` в него попадают наравне со всеми: per-project вызов для всех
+   `code` в него попадают наравне со всеми: per-project вызов для всех
    зарегистрированных guard'ов, пустой результат у per-file — дёшево).
-3. `README.md`: группа в таблицу guard'ов, `awesome smell` в usage.
+3. `README.md`: группа в таблицу guard'ов, `awesome code` в usage.
 4. `docs/guards/<guard>.md` — как у существующих.
 5. `examples/awful/`: один файл на guard (конвенция AGENTS.md: не смешивать
    несколько guard'ов в один файл). Важно: `examples_spec` гоняет Runner
@@ -176,7 +176,7 @@ Whitelist stdlib-баз, наследование от которых легит
 2. Per-file: `HardcodedDependency`, `GodClass`.
 3. Per-project: `DeepInheritance`, `SingleSubclass`, `SubclassNoOverride`.
 4. После каждого этапа: `crystal spec`; самопрогон
-   `crystal run src/awesome.cr -- smell src` на этом репо (self-hosting
+   `crystal run src/awesome.cr -- code src` на этом репо (self-hosting
    проверка на ложных срабатываниях); `doc <Guard>` глазами.
 
 ## Вне scope (осознанно)

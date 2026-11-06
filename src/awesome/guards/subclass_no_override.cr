@@ -14,7 +14,7 @@
 # unknowable); abstract parent methods don't count — those exist to
 # be overridden and are covered by the compiler, not by reuse.
 class Awesome::Guards::SubclassNoOverride < Awesome::Guard
-  KIND = "smell"
+  KIND = "code"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for inheritance of code instead of behaviour: a subclass
     that overrides none of its parent's methods just takes the

@@ -9,7 +9,7 @@
 # method. Thresholds are configurable and the default is deliberately
 # high — outliers first.
 class Awesome::Guards::LongParameterList < Awesome::Guard
-  KIND = "smell"
+  KIND = "code"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for methods taking more parameters than a call site can
     read (default 7) — stated as a fact, with two fixes: bundle the

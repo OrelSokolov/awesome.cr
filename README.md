@@ -37,7 +37,7 @@ $ crystal build --release bin/awesome.cr -o bin/awesome
 $ awesome                 # check the current directory (all guards)
 $ awesome speed           # speed guards only
 $ awesome memory src lib/ # memory guards on specific paths
-$ awesome smell src/      # smell guards only
+$ awesome code src/       # code guards only
 $ awesome --level psycho  # micro-optimization guards too (readability be damned)
 $ awesome src foo.cr      # check specific paths
 $ awesome doc             # documentation for all guards
@@ -143,15 +143,15 @@ guards:
 | StringConcatInLoop | speed | senior | `s += "…"` inside loops — append into IO::Memory, materialize once after the loop | [docs/guards/string_concat_in_loop.md](docs/guards/string_concat_in_loop.md) |
 | TimesIndex | speed | senior | `xs.size.times { |i| xs[i] }` — `each` yields the element, no bounds check | [docs/guards/times_index.md](docs/guards/times_index.md) |
 | UnusedIndex | speed | senior | `each_with_index` with an index nobody reads — plain `each` skips the bookkeeping | [docs/guards/unused_index.md](docs/guards/unused_index.md) |
-| HardcodedDependency | smell | senior | A class that declares an abstraction (`@store : Store`) but news up one of its ≥2 concrete implementations inside a method — the seam exists and the line welds it shut; without that evidence everything is silent | [docs/guards/hardcoded_dependency.md](docs/guards/hardcoded_dependency.md) |
-| GodClass | smell | senior | A class carrying too many responsibilities — measured by method count (25) and instance-variable count (10) | [docs/guards/god_class.md](docs/guards/god_class.md) |
-| DeepInheritance | smell | senior | Inheritance chains three or more levels deep (hops between project classes; external parents cap the chain) | [docs/guards/deep_inheritance.md](docs/guards/deep_inheritance.md) |
-| SingleSubclass | smell | senior | A non-abstract base with exactly one subclass — speculative hierarchy | [docs/guards/single_subclass.md](docs/guards/single_subclass.md) |
-| SubclassNoOverride | smell | senior | A subclass overriding none of its parent's methods — inheritance for code reuse, not polymorphism | [docs/guards/subclass_no_override.md](docs/guards/subclass_no_override.md) |
-| UtilityClass | smell | senior | A class whose methods are all `def self.` with no instance behaviour — a namespace that should be a module | [docs/guards/utility_class.md](docs/guards/utility_class.md) |
-| LongParameterList | smell | senior | A method taking more parameters than a call site can read (default 7) — bundle them or split the method | [docs/guards/long_parameter_list.md](docs/guards/long_parameter_list.md) |
-| NotImplementedOverride | smell | senior | A subclass overriding a parent's concrete method with only `raise NotImplementedError` — the promise, revoked (LSP) | [docs/guards/not_implemented_override.md](docs/guards/not_implemented_override.md) |
-| BoolFlagParameter | smell | senior | A Bool parameter fed both literal `true` and `false` at call sites — two behaviours behind one name | [docs/guards/bool_flag_parameter.md](docs/guards/bool_flag_parameter.md) |
+| HardcodedDependency | code | senior | A class that declares an abstraction (`@store : Store`) but news up one of its ≥2 concrete implementations inside a method — the seam exists and the line welds it shut; without that evidence everything is silent | [docs/guards/hardcoded_dependency.md](docs/guards/hardcoded_dependency.md) |
+| GodClass | code | senior | A class carrying too many responsibilities — measured by method count (25) and instance-variable count (10) | [docs/guards/god_class.md](docs/guards/god_class.md) |
+| DeepInheritance | code | senior | Inheritance chains three or more levels deep (hops between project classes; external parents cap the chain) | [docs/guards/deep_inheritance.md](docs/guards/deep_inheritance.md) |
+| SingleSubclass | code | senior | A non-abstract base with exactly one subclass — speculative hierarchy | [docs/guards/single_subclass.md](docs/guards/single_subclass.md) |
+| SubclassNoOverride | code | senior | A subclass overriding none of its parent's methods — inheritance for code reuse, not polymorphism | [docs/guards/subclass_no_override.md](docs/guards/subclass_no_override.md) |
+| UtilityClass | code | senior | A class whose methods are all `def self.` with no instance behaviour — a namespace that should be a module | [docs/guards/utility_class.md](docs/guards/utility_class.md) |
+| LongParameterList | code | senior | A method taking more parameters than a call site can read (default 7) — bundle them or split the method | [docs/guards/long_parameter_list.md](docs/guards/long_parameter_list.md) |
+| NotImplementedOverride | code | senior | A subclass overriding a parent's concrete method with only `raise NotImplementedError` — the promise, revoked (LSP) | [docs/guards/not_implemented_override.md](docs/guards/not_implemented_override.md) |
+| BoolFlagParameter | code | senior | A Bool parameter fed both literal `true` and `false` at call sites — two behaviours behind one name | [docs/guards/bool_flag_parameter.md](docs/guards/bool_flag_parameter.md) |
 
 ## Development
 
@@ -173,9 +173,9 @@ A guard is a class in `src/awesome/guards/`:
 
 ```crystal
 class Awesome::Guards::MyGuard < Awesome::Guard
-  KIND              = "speed" # or "memory", "smell"
+  KIND              = "speed" # or "memory", "code"
   LEVEL             = "senior" # or "vibecoder", "psycho" (senior is the default)
-  SEVERITY          = "warning" # or "bug", "style" (warning by default; smell kind → style)
+  SEVERITY          = "warning" # or "bug", "style" (warning by default; code kind → style)
   SHORT_DESCRIPTION = "..."
   GOOD_EXAMPLE      = "..."
   BAD_EXAMPLE       = "..."

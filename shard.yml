@@ -1,5 +1,5 @@
 name: awesome
-version: 0.2.0
+version: 0.3.0
 description: |
   awesome — a next-generation semantic linter for Crystal. It checks
   real best practices and performance tricks (struct packing, etc.),

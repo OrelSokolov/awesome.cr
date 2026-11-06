@@ -16,7 +16,7 @@
 # `abstract def` is skipped — implementing a contract with a raise is
 # a compiler/coverage problem, not a broken promise.
 class Awesome::Guards::NotImplementedOverride < Awesome::Guard
-  KIND = "smell"
+  KIND = "code"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for a subclass method whose whole body is
     `raise NotImplementedError.new(...)`, overriding a parent's

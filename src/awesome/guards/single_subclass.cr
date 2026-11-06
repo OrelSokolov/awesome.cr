@@ -12,7 +12,7 @@
 # defined outside the project are never examined — their subclasses
 # are unknowable from this codebase alone.
 class Awesome::Guards::SingleSubclass < Awesome::Guard
-  KIND = "smell"
+  KIND = "code"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for speculative hierarchy: a non-abstract base class with
     exactly one subclass in the project. Inheritance "for the future"

@@ -20,7 +20,7 @@
 # positive. A subclass anywhere also exempts the class: `module` can't
 # be inherited, so the "make it a module" advice would break it.
 class Awesome::Guards::UtilityClass < Awesome::Guard
-  KIND = "smell"
+  KIND = "code"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for classes that are namespaces in disguise: every method
     is `def self.`, with no initialize, no instance defs and no field

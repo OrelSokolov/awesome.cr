@@ -18,7 +18,7 @@
 # project actually wrote is the line where construction-in-a-method
 # stops being a taste call and becomes today's bug.
 class Awesome::Guards::HardcodedDependency < Awesome::Guard
-  KIND = "smell"
+  KIND = "code"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for dependencies constructed, not injected — but only where
     the project itself proves the seam: `SomeConcrete.new` inside a

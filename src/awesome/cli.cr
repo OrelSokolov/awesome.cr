@@ -6,12 +6,12 @@ require "colorize"
 #   awesome                  # check the current directory (all guards)
 #   awesome speed src foo.cr # check paths with speed guards only
 #   awesome memory lib/      # check paths with memory guards only
-#   awesome smell src/       # check paths with smell guards only
+#   awesome code src/        # check paths with code guards only
 #   awesome --level psycho   # opt into micro-optimization guards too
 #   awesome doc [GUARD]      # show guard documentation
 #   awesome guards           # list registered guards — total, by level and kind
 module Awesome::CLI
-  COMMANDS = {"doc", "speed", "memory", "smell", "guards"}
+  COMMANDS = {"doc", "speed", "memory", "code", "guards"}
 
   def self.run(args : Array(String) = ARGV) : Int32
     argv = args.dup
@@ -33,7 +33,7 @@ module Awesome::CLI
           awesome [paths]            Check paths with all guards (default: current dir, awesome.yml aware)
           awesome speed [paths]      Check paths with speed guards only
           awesome memory [paths]     Check paths with memory guards only
-          awesome smell [paths]      Check paths with smell guards only
+          awesome code [paths]       Check paths with code guards only
           awesome doc [GUARD]        Show documentation for one or all guards
           awesome guards             List registered guards (total, by level and kind)
 
@@ -79,7 +79,7 @@ module Awesome::CLI
         << " (available: " << Awesome::Guard::LEVELS.join(", ") << ")\n"
       return 2
     end
-    # Any command other than "check" is a kind filter (speed/memory/smell).
+    # Any command other than "check" is a kind filter (speed/memory/code).
     kind = command == "check" ? nil : command
     report = Runner.new(config, only, except, kind, level).run(paths)
     print_report(report)
@@ -113,9 +113,9 @@ module Awesome::CLI
 
   # Reference listing: how many guards are registered in total and
   # which ones, grouped by check level (vibecoder / senior / psycho),
-  # then by kind (speed / memory / smell), each guard with its short
+  # then by kind (speed / memory / code), each guard with its short
   # description right in the list. Empty groups are skipped.
-  KIND_ORDER = {"speed", "memory", "smell"}
+  KIND_ORDER = {"speed", "memory", "code"}
 
   def self.guards_reference : Int32
     all = Awesome::Guard.all
