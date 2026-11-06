@@ -14,6 +14,10 @@ The guard states facts (`"27 methods, 12 ivars"`), not a verdict —
 whether to split is the author's call. Thresholds are configurable and
 the defaults are deliberately high, so only outliers are flagged.
 
+Counts span the whole project: a class reopened in another file is one
+class, its fragments' methods and ivars merge — splitting a god class
+over two files doesn't hide it.
+
 ## Examples
 
 Good:

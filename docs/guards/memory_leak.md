@@ -1,6 +1,6 @@
 # MemoryLeak
 
-**Checks that C heap allocations from lib shims are paired with a matching free somewhere in the file.**
+**Checks that C heap allocations from lib shims are paired with a matching free somewhere in the project.**
 
 ## Why
 
@@ -26,21 +26,27 @@ class Polygon
 end
 ```
 
-The base check (v1): a file that calls an allocator fun must also call
-a deallocator fun of the same lib at least once. Zero `free` calls
-anywhere in the file means the allocation can never be released — a
-certain leak, not a style nit. One free covering several allocations
-passes; that is the deliberately minimal, zero-false-positive first
-step.
+The base check: a project that calls an allocator fun must also call a
+deallocator fun of the same lib at least once. Zero `free` calls
+anywhere means the allocation can never be released — a certain leak,
+not a style nit. One free covering several allocations passes; that is
+the deliberately minimal, zero-false-positive first step.
+
+The check is project-wide: the pairing often spans files (a wrapper in
+one file, its `#finalize`/`#close` cleanup in another — including a
+class reopened there), so alloc and free evidence is collected over
+all files before anything is reported. A free in any file covers the
+allocation; the issue stays anchored to the alloc call site.
 
 ## What is tracked
 
 - Calls of the form `LibFoo.malloc(...)` where `LibFoo` is a `lib`
-  declared in the file — the shim itself (`fun malloc`) is seen in the
-  compiler's AST, so **no C parsing is required**.
+  declared in the project — the shim itself (`fun malloc`) is seen in
+  the compiler's AST, so **no C parsing is required**. A lib declared
+  in any file is tracked in all of them.
 - Allocators by fun name (defaults): `malloc`, `calloc`, `realloc`,
   `xmalloc`, `strdup`. Deallocators: `free`, `xfree`.
-- Libs bound elsewhere but called in the file (e.g. stdlib's
+- Libs bound elsewhere but called in the project (e.g. stdlib's
   `LibC.malloc`) — tracked via the `Lib`-prefix naming convention.
 - Pairing is per-lib: `LibA.free` does not excuse `LibB.malloc`.
 
@@ -101,10 +107,8 @@ guards:
 Custom shims with unusual names (e.g. `my_alloc` / `my_release`) are
 covered by overriding these lists.
 
-## Limitations (v1)
+## Limitations
 
-- The check is per-file: a malloc in one file and its free in another
-  passes. Cross-file pairing needs a project-wide pass (see ROADMAP).
 - "At least one free" proves the deallocator is reachable, not that
   every allocation is freed on every path — per-call pairing is a
   follow-up.

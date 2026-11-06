@@ -1,7 +1,10 @@
 require "./spec_helper"
 
-def memory_issues(code : String, config_yaml : String? = nil) : Array(Awesome::Issue)
-  guard_issues(Awesome::Guards::MemoryLeak, code, config_yaml)
+# Single snippet runs as a one-file project; an Array(String) is a
+# multi-file project (one Source per string).
+def memory_issues(code : String | Array(String), config_yaml : String? = nil) : Array(Awesome::Issue)
+  codes = code.is_a?(String) ? [code] : code
+  guard_project_issues(Awesome::Guards::MemoryLeak, codes, config_yaml)
 end
 
 describe Awesome::Guards::MemoryLeak do
@@ -117,6 +120,51 @@ describe Awesome::Guards::MemoryLeak do
     issues = memory_issues("ptr = LibC.malloc(16)")
     issues.size.should eq(1)
     issues[0].message.should contain("top level")
+  end
+
+  it "accepts a free in another file (reopened class, cleanup module)" do
+    issues = memory_issues([
+      <<-CODE,
+        class Polygon
+          def initialize
+            @points = LibC.malloc(64)
+          end
+        end
+      CODE
+      <<-CODE,
+        class Polygon
+          def finalize
+            LibC.free(@points) # the pairing lives in another file
+          end
+        end
+      CODE
+    ])
+    issues.should be_empty
+  end
+
+  it "flags an allocation no file in the project frees" do
+    issues = memory_issues([
+      "a = LibC.malloc(16)",
+      "def helper; end",
+    ])
+    issues.size.should eq(1)
+    issues[0].path.should eq("(test0)")
+  end
+
+  it "tracks a lib declared in one file and used in another" do
+    issues = memory_issues([
+      "lib Geo\n  fun malloc(size : Int32) : Void*\n  fun free(ptr : Void*)\nend",
+      "ptr = Geo.malloc(8) # no Lib prefix — tracked via the declaration anyway",
+    ])
+    issues.size.should eq(1)
+    issues[0].path.should eq("(test1)")
+
+    issues = memory_issues([
+      "lib Geo\n  fun malloc(size : Int32) : Void*\n  fun free(ptr : Void*)\nend",
+      "ptr = Geo.malloc(8)",
+      "Geo.free(ptr)",
+    ])
+    issues.should be_empty
   end
 
   it "supports custom allocator/deallocator names via config" do

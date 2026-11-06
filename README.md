@@ -118,7 +118,7 @@ guards:
 | Guard | Kind | Level | Checks | Docs |
 |---|---|---|---|---|
 | StructurePacking | memory | senior | Struct fields ordered by decreasing alignment — no bytes wasted on padding | [docs/guards/structure_packing.md](docs/guards/structure_packing.md) |
-| MemoryLeak | memory | vibecoder | C heap allocations from lib shims (`Lib*.malloc`) paired with a matching free in the file | [docs/guards/memory_leak.md](docs/guards/memory_leak.md) |
+| MemoryLeak | memory | vibecoder | C heap allocations from lib shims (`Lib*.malloc`) paired with a matching free in the project | [docs/guards/memory_leak.md](docs/guards/memory_leak.md) |
 | DoubleFree | memory | vibecoder | The same pointer never passed to a lib-shim deallocator twice without a reassignment in between | [docs/guards/double_free.md](docs/guards/double_free.md) |
 | BoolBitmask | memory | senior | Structs with many Bool fields — a `@[Flags]` enum packs the same flags into one byte | [docs/guards/bool_bitmask.md](docs/guards/bool_bitmask.md) |
 | FileReadLines | memory | senior | `File.read_lines` slurps the whole file; `File.each_line` streams with flat memory use | [docs/guards/file_read_lines.md](docs/guards/file_read_lines.md) |
@@ -138,7 +138,7 @@ guards:
 | StringConcatInLoop | speed | senior | `s += "…"` inside loops — append into IO::Memory, materialize once after the loop | [docs/guards/string_concat_in_loop.md](docs/guards/string_concat_in_loop.md) |
 | TimesIndex | speed | senior | `xs.size.times { |i| xs[i] }` — `each` yields the element, no bounds check | [docs/guards/times_index.md](docs/guards/times_index.md) |
 | UnusedIndex | speed | senior | `each_with_index` with an index nobody reads — plain `each` skips the bookkeeping | [docs/guards/unused_index.md](docs/guards/unused_index.md) |
-| HardcodedDependency | smell | senior | A class constructing its own dependencies (`SomeConcrete.new` outside `initialize`) instead of accepting them via the constructor | [docs/guards/hardcoded_dependency.md](docs/guards/hardcoded_dependency.md) |
+| HardcodedDependency | smell | senior | A class constructing its own dependencies (`SomeConcrete.new` outside `initialize`) instead of accepting them via the constructor; only project-defined classes count, external types are silent unless `flag_externals` | [docs/guards/hardcoded_dependency.md](docs/guards/hardcoded_dependency.md) |
 | GodClass | smell | senior | A class carrying too many responsibilities — measured by method count (25) and instance-variable count (10) | [docs/guards/god_class.md](docs/guards/god_class.md) |
 | DeepInheritance | smell | senior | Inheritance chains three or more levels deep (hops between project classes; external parents cap the chain) | [docs/guards/deep_inheritance.md](docs/guards/deep_inheritance.md) |
 | SingleSubclass | smell | senior | A non-abstract base with exactly one subclass — speculative hierarchy | [docs/guards/single_subclass.md](docs/guards/single_subclass.md) |

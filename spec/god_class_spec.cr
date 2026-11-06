@@ -1,9 +1,16 @@
 require "./spec_helper"
 
+# Single snippet runs as a one-file project; an Array(String) is a
+# multi-file project (one Source per string).
+def god_issues(code : String | Array(String), config_yaml : String? = nil) : Array(Awesome::Issue)
+  codes = code.is_a?(String) ? [code] : code
+  guard_project_issues(Awesome::Guards::GodClass, codes, config_yaml)
+end
+
 describe Awesome::Guards::GodClass do
   it "flags a class crossing either threshold" do
     properties = (1..10).map { |i| "  property ivar#{i} : Int32" }.join('\n')
-    issues = guard_issues(Awesome::Guards::GodClass, <<-CODE)
+    issues = god_issues(<<-CODE)
       class Blob
       #{properties}
         def poke; end
@@ -17,7 +24,7 @@ describe Awesome::Guards::GodClass do
 
   it "counts methods, abstract methods and self-methods alike" do
     defs = (1..25).map { |i| "  def m#{i}; end" }.join('\n')
-    issues = guard_issues(Awesome::Guards::GodClass, <<-CODE)
+    issues = god_issues(<<-CODE)
       class Busy
       #{defs}
       end
@@ -27,7 +34,7 @@ describe Awesome::Guards::GodClass do
   end
 
   it "counts ivars declared, assigned and macro-declared once each" do
-    issues = guard_issues(Awesome::Guards::GodClass, <<-CODE)
+    issues = god_issues(<<-CODE)
       class State
         @a : Int32
         @b = 1
@@ -45,7 +52,7 @@ describe Awesome::Guards::GodClass do
   end
 
   it "keeps nested and sibling classes separate and skips structs and modules" do
-    issues = guard_issues(Awesome::Guards::GodClass, <<-CODE)
+    issues = god_issues(<<-CODE)
       module Wide
         def m1; end
         def m2; end
@@ -70,10 +77,22 @@ describe Awesome::Guards::GodClass do
 
   it "honours configured thresholds" do
     code = "class Small\n  def a; end\n  def b; end\nend\n"
-    guard_issues(Awesome::Guards::GodClass, code).should be_empty
+    god_issues(code).should be_empty
     yaml = "GodClass:\n  max_methods: 2\n"
-    issues = guard_issues(Awesome::Guards::GodClass, code, yaml)
+    issues = god_issues(code, yaml)
     issues.size.should eq(1)
     issues[0].message.should contain("Small: 2 methods and 0 ivars")
+  end
+
+  it "merges a class's fragments across files — reopening no longer hides it" do
+    first = (1..15).map { |i| "  def m#{i}; end" }.join('\n')
+    second = (16..30).map { |i| "  def m#{i}; end" }.join('\n')
+    issues = god_issues([
+      "class Big\n#{first}\nend",
+      "class Big\n#{second}\nend",
+    ])
+    issues.size.should eq(1)
+    issues[0].path.should eq("(test0)") # anchored at the first declaration
+    issues[0].message.should contain("Big: 30 methods")
   end
 end

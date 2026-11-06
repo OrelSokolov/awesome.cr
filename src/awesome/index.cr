@@ -15,6 +15,11 @@
 # zero or several candidates → nil — ambiguity means "can't tell", and
 # guards skip what they can't tell (better a false negative than a
 # false positive).
+#
+# Reopenings merge: a type written as `class Foo` in several files is
+# one entry whose def lists span all of them (the first declaration
+# keeps origin/superclass/decl), so per-project guards see the whole
+# type, not the last fragment of it.
 class Awesome::Index
   # One indexed type (class, struct or module) as written.
   class TypeEntry
@@ -32,22 +37,37 @@ class Awesome::Index
     # these; SubclassNoOverride keeps counting them).
     getter abstract_def_names : Array(String)
     getter origin : Origin
+    # The ClassDef/ModuleDef the type was declared with — kept as
+    # written, so guards can ask how it was declared (abstract, module,
+    # struct) without duplicating that in flags here. For a reopened
+    # type this is the first declaration (reopenings can't change how a
+    # type was declared).
+    getter decl : Crystal::ClassDef | Crystal::ModuleDef
 
-    def initialize(@qualified_name : String, @superclass : String?, @is_abstract : Bool,
-                   @is_module : Bool, @def_names : Array(String),
+    def initialize(@qualified_name : String, @superclass : String?,
+                   @decl : Crystal::ClassDef | Crystal::ModuleDef,
+                   @def_names : Array(String),
                    @abstract_def_names : Array(String), @origin : Origin)
+    end
+
+    def abstract? : Bool
+      decl = @decl
+      decl.is_a?(Crystal::ClassDef) && decl.abstract?
+    end
+
+    def module? : Bool
+      @decl.is_a?(Crystal::ModuleDef)
+    end
+
+    # Value types carry data, not collaborators — a `struct Foo` entry
+    # is data plumbing, not a dependency candidate.
+    def struct? : Bool
+      decl = @decl
+      decl.is_a?(Crystal::ClassDef) && decl.struct?
     end
 
     def last_segment : String
       @qualified_name.split("::").last
-    end
-
-    def abstract? : Bool
-      @is_abstract
-    end
-
-    def module? : Bool
-      @is_module
     end
 
     def path : String
@@ -60,6 +80,20 @@ class Awesome::Index
 
     def line : Int32
       location.try(&.line_number) || 0
+    end
+
+    # Folds a reopening into this entry: def names merge (a method list
+    # spanning files is one list), while the first declaration keeps
+    # origin, superclass and decl — a reopening can't change those
+    # (the compiler rejects a superclass mismatch).
+    def merge_reopening!(other : TypeEntry) : Nil
+      other.def_names.each do |name|
+        @def_names << name unless @def_names.includes?(name)
+      end
+      other.abstract_def_names.each do |name|
+        @abstract_def_names << name unless @abstract_def_names.includes?(name)
+      end
+      @superclass ||= other.superclass
     end
   end
 
@@ -77,11 +111,22 @@ class Awesome::Index
     end
   end
 
-  # Called by the visitor while walking the sources.
-  def add(entry : TypeEntry) : Nil
+  # Called by the visitor while walking the sources. A reopening of an
+  # already indexed type (same qualified name, another file or later in
+  # the same file) folds into the existing entry instead of adding a
+  # second one — def lists merge, the first declaration keeps origin,
+  # superclass and decl. Returns the canonical entry (the surviving
+  # one), so the visitor attaches later defs to it, not to the discarded
+  # reopening.
+  def add(entry : TypeEntry) : TypeEntry
+    if existing = @by_name[entry.qualified_name]?
+      existing.merge_reopening!(entry)
+      return existing
+    end
     @entries << entry
     @by_name[entry.qualified_name] = entry
     (@by_last_segment[entry.last_segment] ||= [] of TypeEntry) << entry
+    entry
   end
 
   # Exact qualified-name match ("App::Base" as written in the sources).
@@ -125,12 +170,12 @@ class Awesome::Index
     end
 
     def visit(node : Crystal::ClassDef)
-      push(node, superclass_of(node), node.abstract?)
+      push(node, superclass_of(node))
       true
     end
 
     def visit(node : Crystal::ModuleDef)
-      push(node, nil, false)
+      push(node, nil)
       true
     end
 
@@ -151,13 +196,14 @@ class Awesome::Index
     end
 
     private def push(node : Crystal::ClassDef | Crystal::ModuleDef,
-                     superclass : String?, is_abstract : Bool) : Nil
+                     superclass : String?) : Nil
       names = @nesting.map(&.qualified_name) << node.name.to_s
-      entry = TypeEntry.new(names.join("::"), superclass, is_abstract,
-        node.is_a?(Crystal::ModuleDef), [] of String, [] of String,
+      entry = TypeEntry.new(names.join("::"), superclass, node,
+        [] of String, [] of String,
         TypeEntry::Origin.new(@path, node.location))
-      @index.add(entry)
-      @nesting << entry
+      # add() folds a reopening into the canonical entry and hands it
+      # back — defs written in this reopening attach to that one.
+      @nesting << @index.add(entry)
     end
 
     # Superclass path as a plain string: `Base(T)` keeps only `Base` —

@@ -1,8 +1,15 @@
 require "./spec_helper"
 
+# Single snippet runs as a one-file project; an Array(String) is a
+# multi-file project (one Source per string).
+def utility_issues(code : String | Array(String), config_yaml : String? = nil) : Array(Awesome::Issue)
+  codes = code.is_a?(String) ? [code] : code
+  guard_project_issues(Awesome::Guards::UtilityClass, codes, config_yaml)
+end
+
 describe Awesome::Guards::UtilityClass do
   it "flags a class with only class methods" do
-    issues = guard_issues(Awesome::Guards::UtilityClass, <<-CODE)
+    issues = utility_issues(<<-CODE)
       class Registry
         def self.load(path)
         end
@@ -18,7 +25,7 @@ describe Awesome::Guards::UtilityClass do
   end
 
   it "does not flag a module — namespaces are the honest spelling" do
-    issues = guard_issues(Awesome::Guards::UtilityClass, <<-CODE)
+    issues = utility_issues(<<-CODE)
       module Registry
         def self.load(path)
         end
@@ -28,7 +35,7 @@ describe Awesome::Guards::UtilityClass do
   end
 
   it "skips classes with any instance behaviour" do
-    issues = guard_issues(Awesome::Guards::UtilityClass, <<-CODE)
+    issues = utility_issues(<<-CODE)
       class WithInit
         def self.build
         end
@@ -64,7 +71,7 @@ describe Awesome::Guards::UtilityClass do
   end
 
   it "skips subclasses, structs and empty classes" do
-    issues = guard_issues(Awesome::Guards::UtilityClass, <<-CODE)
+    issues = utility_issues(<<-CODE)
       class Base
         def load
         end
@@ -86,7 +93,7 @@ describe Awesome::Guards::UtilityClass do
   end
 
   it "skips def self.new factories — construction through them is meaningful" do
-    issues = guard_issues(Awesome::Guards::UtilityClass, <<-CODE)
+    issues = utility_issues(<<-CODE)
       class Point
         def self.new(x, y)
           allocate
@@ -97,7 +104,7 @@ describe Awesome::Guards::UtilityClass do
   end
 
   it "keeps nested classes separate" do
-    issues = guard_issues(Awesome::Guards::UtilityClass, <<-CODE)
+    issues = utility_issues(<<-CODE)
       class Outer
         def load
         end
@@ -110,5 +117,44 @@ describe Awesome::Guards::UtilityClass do
       CODE
     issues.size.should eq(1)
     issues[0].message.should contain("Inner")
+  end
+
+  it "does not flag a class whose reopening in another file adds instance behaviour" do
+    issues = utility_issues([
+      <<-CODE,
+        class Registry
+          def self.load(path)
+          end
+
+          def self.save(path, data)
+          end
+        end
+      CODE
+      <<-CODE,
+        class Registry
+          def helper # instance behaviour, added in another file
+          end
+        end
+      CODE
+    ])
+    issues.should be_empty
+  end
+
+  it "does not flag a class that another file subclasses — module can't be inherited" do
+    issues = utility_issues([
+      <<-CODE,
+        class Registry
+          def self.load(path)
+          end
+        end
+      CODE
+      <<-CODE,
+        class FastRegistry < Registry
+          def find(x)
+          end
+        end
+      CODE
+    ])
+    issues.should be_empty
   end
 end

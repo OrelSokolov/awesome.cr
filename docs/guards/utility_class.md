@@ -44,8 +44,11 @@ end
 
 - Any instance behaviour — one instance def, `initialize`, a
   getter/property, or an instance macro means the class is
-  instantiable and the verdict is off.
+  instantiable and the verdict is off. The check is project-wide, so
+  behaviour added by a reopening in another file counts too.
 - A superclass — inherited behaviour is unknowable from syntax.
+- A subclass anywhere in the project — `module` can't be inherited,
+  the switch would break it.
 - A `def self.new` factory — construction through it is meaningful,
   and a module can't take its place.
 - Structs (value types carry data, not roles), modules (already the

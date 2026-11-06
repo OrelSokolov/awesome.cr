@@ -54,11 +54,17 @@ end
 - Exceptions (`raise X.new`, names ending in `Error`/`Exception`).
 - A class constructing itself or a type nested inside it (private
   helpers like an AST `Visitor`).
-- Structs — value types carry data, not collaborators.
-- The `allowed` whitelist — stdlib data types by default (`Array`,
-  `Hash`, `Set`, `Deque`, `Slice`, `String`, `IO`, `Time`, `Random`,
-  `Crystal`); config entries extend it, matching the written path
-  exactly, as a namespace prefix, or by last segment.
+- Project structs — value types carry data, not collaborators;
+  constructing one (`Vec.new(x, y)`) is data plumbing, decided by
+  evidence from the project Index, not by name.
+- External types (shards, stdlib) — unknowable from syntax alone: from
+  the call site `Egui::Pos2.new` (data) and `HTTP::Client.new` (a
+  service) look identical, so they are silent by default. Opt in with
+  `flag_externals: true`; the `allowed` whitelist then carves out
+  exceptions (stdlib data types by default: `Array`, `Hash`, `Set`,
+  `Deque`, `Slice`, `String`, `IO`, `Time`, `Random`, `Crystal`).
+  Config entries match the written path exactly, as a namespace
+  prefix, or by last segment.
 
 ## Config
 
@@ -66,6 +72,7 @@ end
 guards:
   HardcodedDependency:
     enabled: true
-    allowed: [MessageBus, MyFramework] # paths or namespaces
+    flag_externals: false              # flag shard/stdlib types too
+    allowed: [MessageBus, MyFramework] # whitelist for flag_externals mode
     min_dependencies: 1                # per class, fire from N hits
 ```

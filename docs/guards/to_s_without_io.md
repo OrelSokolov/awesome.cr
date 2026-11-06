@@ -32,8 +32,13 @@ end
 
 ## What is skipped
 
-- Nothing provable — a zero-arg `to_s` (with or without a return
-  type, abstract included) is always the wrong hook. If the zero-arg
+- Classes that also define a `to_s` overload with arguments
+  (`def to_s(io : IO)`) anywhere in the project — such an overload
+  usually delegates to the zero-arg form, so "never runs where it
+  matters" would be a false positive. The check is project-wide, so
+  an overload added by a reopening in another file counts too.
+- Everything else provable — a zero-arg `to_s` (with or without a
+  return type, abstract included) is the wrong hook. If the zero-arg
   form is deliberate API in your codebase, switch the whole pattern
   off with `check_to_s: false`.
 

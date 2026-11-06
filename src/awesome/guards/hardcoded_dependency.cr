@@ -6,21 +6,27 @@
 # welded in. Constructor injection (`def initialize(@engine : Engine)`)
 # keeps the class in charge of using, not creating.
 #
-# Purely syntactic (per-file, no semantic pass), so the skips are
-# conservative: polymorphic `klass.new`, factory class-methods
-# (`def self.build`), exceptions, whitelisted stdlib data types and
-# types nested inside the same class (private helpers like `Visitor`)
-# are never flagged. Better a false negative than a false positive.
+# Project-wide (test_project): whether a constructed type is a
+# collaborator or mere data is decided by evidence from the syntactic
+# Index, not by guesswork. A type defined in the project is known: a
+# `struct` is a value object (constructing it is data plumbing), a
+# `class` is a real collaborator weld. A type not defined in the
+# project (a shard, the stdlib) is unknowable from syntax, so it is
+# silent by default — `flag_externals: true` opts back into flagging
+# external constructions, with the `allowed` whitelist for exceptions.
+# Better a false negative than a false positive.
 class Awesome::Guards::HardcodedDependency < Awesome::Guard
   KIND = "smell"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for dependencies constructed, not injected: a hardcoded
     `SomeConcrete.new` inside a class (outside `initialize`) is welded
     in — it cannot be substituted in tests or reconfigured. Pass the
-    dependency in through the constructor instead. Polymorphic
-    `klass.new` calls, factory class-methods (`def self.build`),
-    exceptions, a class constructing itself or its own nested types,
-    and a whitelist of stdlib data types are never flagged.
+    dependency in through the constructor instead. Only classes
+    defined in the project count — a project struct is data plumbing,
+    external types (shards, stdlib) are silent unless
+    `flag_externals: true`. Polymorphic `klass.new` calls, factory
+    class-methods (`def self.build`), exceptions, a class constructing
+    itself or its own nested types are never flagged.
   TEXT
 
   GOOD_EXAMPLE = <<-CODE
@@ -44,28 +50,54 @@ class Awesome::Guards::HardcodedDependency < Awesome::Guard
   CODE
 
   # Types whose construction is data plumbing, not a collaborator
-  # dependency. The config list extends this one; entries match the
-  # written path exactly, as a namespace prefix ("Crystal" also covers
-  # "Crystal::Parser"), or by last segment ("Awesome::Source" covers a
-  # relative "Source.new").
+  # dependency. Applies to external constructions when
+  # `flag_externals` is on; entries match the written path exactly, as
+  # a namespace prefix ("Crystal" also covers "Crystal::Parser"), or
+  # by last segment ("Awesome::Source" covers a relative "Source.new").
   DEFAULT_ALLOWED = ["Array", "Hash", "Set", "Deque", "Slice",
                      "String", "IO", "Time", "Random", "Crystal"]
 
   # Fire once the class hardcodes at least this many dependencies.
   MIN_DEPENDENCIES = 1
 
-  def test(source : Awesome::Source, config : Awesome::GuardConfig) : Array(Awesome::Issue)
-    issues = [] of Awesome::Issue
-    hardcoded = Collector.new(source).run
+  # Whether types not defined in the project (shards, stdlib) are
+  # flagged too. Off by default: from syntax alone an external type
+  # can't be told apart from a value object (`Egui::Pos2.new` is data,
+  # `HTTP::Client.new` is a service), and a guess that noisy is worse
+  # than silence.
+  FLAG_EXTERNALS = false
 
+  def test(source : Awesome::Source, config : Awesome::GuardConfig) : Array(Awesome::Issue)
+    [] of Awesome::Issue # evidence spans files — the project pass decides
+  end
+
+  def test_project(sources : Array(Awesome::Source), config : Awesome::GuardConfig) : Array(Awesome::Issue)
+    issues = [] of Awesome::Issue
+    index = Awesome::Index.new(sources)
+    hardcoded = sources.flat_map { |source| Collector.new(source).run }
+
+    flag_externals = config.bool("flag_externals", FLAG_EXTERNALS)
     allowed = DEFAULT_ALLOWED + config.strings("allowed", [] of String)
     min = config.int("min_dependencies", MIN_DEPENDENCIES)
 
     hardcoded.reject! do |hit|
-      allowed.any? do |entry|
-        hit.path == entry ||
-          hit.path.starts_with?("#{entry}::") ||
-          entry.split("::").last == hit.path.split("::").last
+      if entry = index.resolve(hit.path)
+        # Project type — decided by evidence: a struct (or module) is
+        # data plumbing, a class is a collaborator.
+        entry.struct? || entry.module?
+      else
+        # External (a shard, the stdlib) — silent unless opted in.
+        !flag_externals
+      end
+    end
+    # The whitelist carves exceptions out of whatever is left — project
+    # classes (plumbing like Awesome::Issue) and, in flag_externals
+    # mode, external types (stdlib data by default).
+    hardcoded.reject! do |hit|
+      allowed.any? do |pattern|
+        hit.path == pattern ||
+          hit.path.starts_with?("#{pattern}::") ||
+          pattern.split("::").last == hit.path.split("::").last
       end
     end
     counts = {} of String => Int32
@@ -75,21 +107,23 @@ class Awesome::Guards::HardcodedDependency < Awesome::Guard
     hardcoded.each do |hit|
       next unless counts[hit.owner]?
       issues << Awesome::Issue.new(
-        source.path,
+        hit.source.path,
         "HardcodedDependency",
         "#{hit.owner} constructs #{hit.path}.new itself (#{hit.where}) — " \
         "pass the dependency in instead; a welded-in type can't be " \
         "substituted in tests",
         hit.location,
-        source.excerpt_at(hit.location.try(&.line_number) || 0)
+        hit.source.excerpt_at(hit.location.try(&.line_number) || 0)
       )
     end
     issues
   end
 
   # One `X.new` call site: receiver path as written, enclosing class,
-  # enclosing def (or "class body"), location.
-  record Hit, path : String, owner : String, where : String, location : Crystal::Location?
+  # enclosing def (or "class body"), location, and the source it was
+  # seen in (the project pass spans files, an issue is anchored to one).
+  record Hit, path : String, owner : String, where : String,
+    location : Crystal::Location?, source : Awesome::Source
 
   # First pass: map ClassDef → names of types nested inside it (any
   # depth) — constructing your own nested helpers is not a dependency.
@@ -151,7 +185,7 @@ class Awesome::Guards::HardcodedDependency < Awesome::Guard
       return if defn && defn.receiver              # factory class-methods (def self.build)
 
       where = defn ? "#{owner.name}##{defn.name}" : "#{owner.name} class body"
-      hardcoded << Hit.new(path, owner.name.to_s, where, node.location)
+      hardcoded << Hit.new(path, owner.name.to_s, where, node.location, @source)
     end
   end
 

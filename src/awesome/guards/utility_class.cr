@@ -13,14 +13,21 @@
 # exempts the class — inherited behaviour is unknowable from syntax —
 # and so does a `def self.new` factory (construction through it is
 # meaningful, and a module can't take its place).
+#
+# Project-wide (test_project): "no instance behaviour" must hold over
+# every fragment of the class — a reopening in another file can add an
+# instance def, which per-file analysis would miss and flag a false
+# positive. A subclass anywhere also exempts the class: `module` can't
+# be inherited, so the "make it a module" advice would break it.
 class Awesome::Guards::UtilityClass < Awesome::Guard
   KIND = "smell"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for classes that are namespaces in disguise: every method
     is `def self.`, with no initialize, no instance defs and no field
     macros — never usefully instantiated. A module says the same and
-    keeps every call site valid. Classes with a superclass or any
-    instance behaviour are skipped.
+    keeps every call site valid. Classes with a superclass, a subclass,
+    or any instance behaviour (even added in another file by
+    reopening) are skipped.
   TEXT
 
   GOOD_EXAMPLE = <<-CODE
@@ -43,26 +50,44 @@ class Awesome::Guards::UtilityClass < Awesome::Guard
   FIELD_MACROS = {"property", "property?", "getter", "getter?", "setter"}
 
   def test(source : Awesome::Source, config : Awesome::GuardConfig) : Array(Awesome::Issue)
-    visitor = Visitor.new
-    source.ast.try &.accept(visitor)
+    [] of Awesome::Issue # evidence spans files — the project pass decides
+  end
 
-    visitor.facts.select(&.utility_class?).map do |fact|
+  def test_project(sources : Array(Awesome::Source), config : Awesome::GuardConfig) : Array(Awesome::Issue)
+    index = Awesome::Index.new(sources)
+    merged = {} of String => Fact
+
+    sources.each do |source|
+      source.ast.try &.accept(Visitor.new(source, merged))
+    end
+
+    merged.values.select(&.utility_class?).compact_map do |fact|
+      # A subclass anywhere means the class is a parent — `module`
+      # can't be inherited, the switch would break it.
+      if entry = index.find(fact.qualified)
+        next unless index.subclasses_of(entry).empty?
+      end
       Awesome::Issue.new(
-        source.path,
+        fact.source.path,
         "UtilityClass",
-        "#{fact.name}: all #{fact.class_methods} #{"method".pluralize(fact.class_methods)} " \
+        "#{fact.display}: all #{fact.class_methods} #{"method".pluralize(fact.class_methods)} " \
         "are class methods and nothing is instantiated — a namespace, not a type; " \
-        "make it a module (call sites like #{fact.name}.method stay valid)",
+        "make it a module (call sites like #{fact.display}.method stay valid)",
         fact.location,
-        source.excerpt_at(fact.line)
+        fact.source.excerpt_at(fact.line)
       )
     end
   end
 
-  record Fact, name : String, class_methods : Int32, instance_behaviour : Bool,
-    has_new_factory : Bool, location : Crystal::Location? do
+  # One class's evidence, merged across files when the class is
+  # reopened: the qualified name identifies it, the first fragment's
+  # location/source anchors the issue.
+  record Fact, qualified : String, display : String, class_methods : Int32,
+    instance_behaviour : Bool, has_new_factory : Bool, has_superclass : Bool,
+    is_struct : Bool, location : Crystal::Location?, source : Awesome::Source do
     def utility_class? : Bool
-      class_methods > 0 && !has_new_factory && !instance_behaviour
+      class_methods > 0 && !has_new_factory && !instance_behaviour &&
+        !has_superclass && !is_struct
     end
 
     def line : Int32
@@ -73,24 +98,29 @@ class Awesome::Guards::UtilityClass < Awesome::Guard
   # Tracks class-level vs instance-level defs, macros and field macros
   # per ClassDef — nested types count for themselves, not their outer
   # class. Field macros count only at class-body level; inside a def a
-  # `getter` call is just a call.
+  # `getter` call is just a call. Fragments merge into `merged` by
+  # qualified name (a reopened class is one class, whatever file each
+  # fragment lives in).
   private class Visitor < Crystal::Visitor
-    getter facts = [] of Fact
+    @nesting = [] of String        # enclosing type names, innermost last
+    @contexts = [] of Context      # ClassDef contexts, innermost last
+    @body_depth = 0                # >0 inside a def/macro body
 
-    @contexts = [] of Context
-    @body_depth = 0 # >0 inside a def/macro body
+    def initialize(@source : Awesome::Source, @merged : Hash(String, Fact))
+    end
 
-    def visit(node : Crystal::ClassDef)
-      return true if node.struct? # value types carry data, not roles
-      return true if node.superclass # inherited behaviour is unknowable
-      @contexts << Context.new(node.name.to_s, node.location)
+    def visit(node : Crystal::ClassDef | Crystal::ModuleDef)
+      @nesting << node.name.to_s
+      if node.is_a?(Crystal::ClassDef)
+        @contexts << Context.new(qualified_name, node)
+      end
       true
     end
 
-    def end_visit(node : Crystal::ClassDef)
-      if ctx = @contexts.pop?
-        facts << Fact.new(ctx.name, ctx.class_methods, ctx.instance_behaviour?,
-          ctx.has_new_factory?, ctx.location)
+    def end_visit(node : Crystal::ClassDef | Crystal::ModuleDef)
+      @nesting.pop
+      if node.is_a?(Crystal::ClassDef) && (ctx = @contexts.pop?)
+        merge(ctx)
       end
     end
 
@@ -98,7 +128,7 @@ class Awesome::Guards::UtilityClass < Awesome::Guard
       if ctx = @contexts.last?
         if node.receiver
           ctx.bump_class_method
-          ctx.has_new_factory = true if node.name == "new"
+          ctx.mark_new_factory if node.name == "new"
         else
           ctx.mark_instance_behaviour
         end
@@ -132,17 +162,69 @@ class Awesome::Guards::UtilityClass < Awesome::Guard
       true
     end
 
-    # Name, location, class-method count, and whether any instance
-    # behaviour exists (def, macro or field macro) — the counters
-    # collapse into the boolean because only emptiness is a verdict.
-    private class Context
-      getter name : String
-      getter location : Crystal::Location?
-      getter class_methods = 0
-      property? instance_behaviour = false
-      property? has_new_factory = false
+    private def qualified_name : String
+      @nesting.join("::")
+    end
 
-      def initialize(@name, @location)
+    # Folds this fragment into the merged fact: counters add up, the
+    # exemption flags OR together, the first fragment anchors the issue.
+    private def merge(ctx : Context) : Nil
+      qualified = ctx.qualified
+      if fact = @merged[qualified]?
+        @merged[qualified] = Fact.new(qualified, fact.display,
+          fact.class_methods + ctx.class_methods,
+          fact.instance_behaviour || ctx.instance_behaviour?,
+          fact.has_new_factory || ctx.has_new_factory?,
+          fact.has_superclass || ctx.has_superclass?,
+          fact.is_struct || ctx.is_struct?,
+          fact.location, fact.source)
+      else
+        @merged[qualified] = Fact.new(qualified, ctx.node.name.to_s.split("::").last,
+          ctx.class_methods, ctx.instance_behaviour?, ctx.has_new_factory?,
+          ctx.has_superclass?, ctx.is_struct?, ctx.node.location, @source)
+      end
+    end
+
+    # One ClassDef fragment's counters and exemption flags — they
+    # collapse into the flags because only emptiness is a verdict.
+    # Plain ivars (no field macros): GodClass counts macro-declared
+    # fields, and a lint tool's own plumbing shouldn't trip its guards.
+    private class Context
+      @class_methods = 0
+      @instance_behaviour = false
+      @has_new_factory = false
+
+      def initialize(@qualified : String, @node : Crystal::ClassDef)
+        @has_superclass = !@node.superclass.nil?
+        @is_struct = @node.struct?
+      end
+
+      def qualified : String
+        @qualified
+      end
+
+      def node : Crystal::ClassDef
+        @node
+      end
+
+      def class_methods : Int32
+        @class_methods
+      end
+
+      def instance_behaviour? : Bool
+        @instance_behaviour
+      end
+
+      def has_new_factory? : Bool
+        @has_new_factory
+      end
+
+      def has_superclass? : Bool
+        @has_superclass
+      end
+
+      def is_struct? : Bool
+        @is_struct
       end
 
       def bump_class_method : Nil
@@ -151,6 +233,10 @@ class Awesome::Guards::UtilityClass < Awesome::Guard
 
       def mark_instance_behaviour : Nil
         @instance_behaviour = true
+      end
+
+      def mark_new_factory : Nil
+        @has_new_factory = true
       end
     end
   end
