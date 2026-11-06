@@ -1,5 +1,11 @@
 # Plan: zero-allocations / zero-copy guards
 
+Status: patterns 1, 2, 3 and 5 are implemented (as `InterpIntoIo`,
+`StringConcatInLoop`, `SelectCompareZero` and `FileReadLines`
+respectively — the catalog in `performance_top50.md` split them into
+separate single-purpose guards). Pattern 4 (`ToSWithoutIo`, config
+`check_to_s`) and the `@[ZeroAlloc]` annotation are still open.
+
 Обнаружение мест, где «просятся» оптимизации по zero allocations / zero copy,
 по AST (`Crystal::Parser` — тот же, что использует `awesome` через
 `Awesome::Source`). Проверено на Crystal 1.21: все паттерны ниже видны чисто

@@ -23,7 +23,7 @@ class Awesome::Source
       parser.filename = @path
       parser.parse
     rescue ex : Crystal::SyntaxException
-      STDERR.puts "awesome: skipping #{@path}: #{ex.message}"
+      STDERR << "awesome: skipping " << @path << ": " << ex.message << '\n'
       nil
     end
   end

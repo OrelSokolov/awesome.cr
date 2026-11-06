@@ -38,44 +38,22 @@ class Awesome::Guards::StringConcatInLoop < Awesome::Guard
     end
   CODE
 
-  # Call-with-block methods that run their block zero or more times.
-  ITERATORS = {"times", "each", "each_with_index", "map", "loop",
-               "upto", "downto", "step"}
-
   def test(source : Awesome::Source, config : Awesome::GuardConfig) : Array(Awesome::Issue)
     visitor = Visitor.new(source)
     source.ast.try &.accept(visitor)
     visitor.issues
   end
 
-  private class Visitor < Crystal::Visitor
+  # Loop tracking (while/until + iterator calls with blocks) lives in
+  # Awesome::LoopVisitor, shared with the other loop-context guards.
+  private class Visitor < Awesome::LoopVisitor
     getter issues = [] of Awesome::Issue
 
     def initialize(@source : Awesome::Source)
     end
 
-    @loop_depth = 0
-
-    def visit(node : Crystal::While | Crystal::Until)
-      @loop_depth += 1
-      true
-    end
-
-    def end_visit(node : Crystal::While | Crystal::Until)
-      @loop_depth -= 1
-    end
-
-    def visit(node : Crystal::Call)
-      @loop_depth += 1 if loop_call?(node)
-      true
-    end
-
-    def end_visit(node : Crystal::Call)
-      @loop_depth -= 1 if loop_call?(node)
-    end
-
     def visit(node : Crystal::OpAssign)
-      if @loop_depth > 0 && node.op == "+" &&
+      if loop? && node.op == "+" &&
          string_value?(node.value) && assignable?(node.target)
         add_issue(node)
       end
@@ -83,7 +61,7 @@ class Awesome::Guards::StringConcatInLoop < Awesome::Guard
     end
 
     def visit(node : Crystal::Assign)
-      if @loop_depth > 0 && assignable?(node.target) &&
+      if loop? && assignable?(node.target) &&
          (call = node.value).is_a?(Crystal::Call) && call.name == "+" &&
          call.obj.is_a?(Crystal::Var | Crystal::InstanceVar) &&
          call.obj.to_s == node.target.to_s &&
@@ -94,13 +72,10 @@ class Awesome::Guards::StringConcatInLoop < Awesome::Guard
     end
 
     # Fallback: redefining `visit` in a subclass replaces the base
-    # class's overloads, so re-enable traversal for everything else.
+    # class's overloads, so re-enable traversal for everything else
+    # (keeps LoopVisitor's loop tracking alive).
     def visit(node : Crystal::ASTNode)
-      true
-    end
-
-    private def loop_call?(node : Crystal::Call) : Bool
-      !node.block.nil? && ITERATORS.includes?(node.name)
+      super
     end
 
     private def assignable?(node : Crystal::ASTNode) : Bool

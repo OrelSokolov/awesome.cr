@@ -12,8 +12,15 @@ guard fires only when the *shape* of the expression proves the cost
 (literal arguments, method names on known receivers, loop context from
 `While`/`Block`). Unprovable → skip. False negatives are fine.
 
-Existing guards already cover the struct-layout family:
-`StructurePacking`, `BoolBitmask`, `NilableStructField`.
+Existing guards already cover the struct-layout family
+(`StructurePacking`, `BoolBitmask`, `NilableStructField`) and the whole
+top-10 priority list below: `InterpIntoIo`, `FileReadLines`,
+`StringConcatInLoop`, `AggregateAfterTransform`, `SelectCompareZero`,
+`SelectFirst`, `ArrayConcatInLoop`, `SingleCharStringArg`,
+`MapFlatten`, `MapCompact`, `UnusedIndex`, `TimesIndex`,
+`LogEagerInterp`, `ArrayShiftInLoop`, `SelfSortReassign`. The shared
+loop-context visitor now exists as `Awesome::LoopVisitor`
+(`src/awesome/loop_visitor.cr`).
 
 ## Priority order (highest value × lowest FP risk first)
 

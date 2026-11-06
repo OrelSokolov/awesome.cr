@@ -39,7 +39,7 @@ module Awesome::CLI
       p.on("--only A,B", "Run only these guards") { |v| only = split_list(v) }
       p.on("--except A,B", "Run all but these guards") { |v| except = split_list(v) }
       p.on("-v", "--version", "Show version") do
-        puts "awesome #{Awesome::VERSION}"
+        STDOUT << "awesome " << Awesome::VERSION << '\n'
         finished = true
       end
       p.on("-h", "--help", "Show this help") do
@@ -67,7 +67,7 @@ module Awesome::CLI
     print_report(report)
     report.awesome? ? 0 : 1
   rescue ex : YAML::ParseException
-    STDERR.puts "awesome: config parse error: #{ex.message}"
+    STDERR << "awesome: config parse error: " << ex.message << '\n'
     2
   end
 
@@ -76,8 +76,8 @@ module Awesome::CLI
     unless names.empty?
       guards = guards.select { |g| names.includes?(g.name) }
       if guards.empty?
-        STDERR.puts "awesome: no such guard: #{names.join(", ")}"
-        STDERR.puts "Available: #{Awesome::Guard.all.map(&.name).join(", ")}"
+        STDERR << "awesome: no such guard: " << names.join(", ") << '\n'
+        STDERR << "Available: " << Awesome::Guard.all.map(&.name).join(", ") << '\n'
         return 2
       end
     end
@@ -103,7 +103,9 @@ module Awesome::CLI
         puts
       end
     end
-    puts "#{report.inspected} inspected, #{report.issues.size} #{"issue".pluralize(report.issues.size)}."
+    count = report.issues.size
+    STDOUT << report.inspected << " inspected, " << count << ' ' \
+      << "issue".pluralize(count) << ".\n"
     if report.awesome?
       puts "Your code is awesome.".colorize.light_green.bold
     else
@@ -116,7 +118,7 @@ module Awesome::CLI
   end
 
   private def self.usage_error(message : String, parser : OptionParser) : Int32
-    STDERR.puts "awesome: #{message}"
+    STDERR << "awesome: " << message << '\n'
     STDERR.puts parser
     2
   end
