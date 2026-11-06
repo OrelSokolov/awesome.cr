@@ -84,6 +84,9 @@ guards:
 | DoubleFree | memory | The same pointer never passed to a lib-shim deallocator twice without a reassignment in between | [docs/guards/double_free.md](docs/guards/double_free.md) |
 | HardcodedDependency | smell | A class constructing its own dependencies (`SomeConcrete.new` outside `initialize`) instead of accepting them via the constructor | [docs/guards/hardcoded_dependency.md](docs/guards/hardcoded_dependency.md) |
 | GodClass | smell | A class carrying too many responsibilities — measured by method count (25) and instance-variable count (10) | [docs/guards/god_class.md](docs/guards/god_class.md) |
+| DeepInheritance | smell | Inheritance chains three or more levels deep (hops between project classes; external parents cap the chain) | [docs/guards/deep_inheritance.md](docs/guards/deep_inheritance.md) |
+| SingleSubclass | smell | A non-abstract base with exactly one subclass — speculative hierarchy | [docs/guards/single_subclass.md](docs/guards/single_subclass.md) |
+| SubclassNoOverride | smell | A subclass overriding none of its parent's methods — inheritance for code reuse, not polymorphism | [docs/guards/subclass_no_override.md](docs/guards/subclass_no_override.md) |
 
 ## Development
 

@@ -1,8 +1,8 @@
 # Plan: группа `smell` — design-smell guard'ы
 
-Status: каркас реализован (команда `awesome smell`, базовый
-`Guard#test_project`, `Awesome::Index`, спеки `spec/index_spec.cr` /
-`spec/project_pass_spec.cr`). Guard'ы группы — не реализованы.
+Status: реализовано полностью — все 5 guard'ов (спеки, доки
+`docs/guards/`, примеры `examples/awful/`), самопрогон `awesome smell`
+на этом репо чист.
 
 Группа `smell` — третий вид проверок после `speed` и `memory`: не
 производительность, а design-smell'и — механически проверяемые признаки

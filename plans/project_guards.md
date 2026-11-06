@@ -1,11 +1,11 @@
 # Plan: design-smell guards (group `smell`) and per-project analysis
 
-Status: каркас реализован (`test_project`-контракт, `Awesome::Index`,
-CLI-группа `smell`; `src/awesome/guard.cr`, `src/awesome/index.cr`,
-`src/awesome/runner.cr`, `src/awesome/cli.cr`). Сами guard'ы группы
-`smell` — не реализованы. Каталог самих guard'ов группы `smell`
-(включая per-file) — в [smell.md](smell.md); здесь — per-project часть:
-контракт `test_project`, Index и правила работы с внешними родителями.
+Status: реализовано полностью — каркас (`test_project`, `Awesome::Index`,
+CLI-группа `smell`) и все guard'ы: per-file `HardcodedDependency`,
+`GodClass`; per-project `DeepInheritance`, `SingleSubclass`,
+`SubclassNoOverride`. Каталог самих guard'ов группы `smell` — в
+[smell.md](smell.md); здесь — per-project часть: контракт
+`test_project`, Index и правила работы с внешними родителями.
 
 Исходный вопрос был «можно ли добавить проверки SOLID». Честный разбор по
 буквам: **D** (Dependency Inversion) детектируется чисто механически, **S** —
