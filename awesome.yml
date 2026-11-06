@@ -41,9 +41,10 @@ guards:
     # deallocators: [free, xfree]
   HardcodedDependency:
     enabled: true
-    # the runner wiring its own pipeline types is plumbing, not a
-    # domain dependency (extends the built-in stdlib whitelist):
-    allowed: [Awesome::Source, Awesome::Report, Awesome::Issue, GuardConfig, Awesome::Index]
+    # fires only on a proven seam (an abstraction with 2+ project
+    # implementations that the same class declares in a type
+    # annotation); the whitelist below carves out exceptions:
+    # allowed: [SomeConcrete]
   GodClass:
     enabled: true
     # max_methods: 25

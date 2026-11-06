@@ -1,172 +1,288 @@
 require "./spec_helper"
 
 describe Awesome::Guards::HardcodedDependency do
-  it "flags a project class constructed outside initialize" do
+  it "flags a concrete construction when the owner already works with the abstraction" do
     issues = guard_project_issues(Awesome::Guards::HardcodedDependency, [<<-CODE])
-      class Engine
-        def run; end
+      class Store
+        def warm; end
       end
 
-      class Car
-        def start
-          engine = Engine.new
-          engine.run
+      class MemoryStore < Store
+        def warm; end
+      end
+
+      class RedisStore < Store
+        def warm; end
+      end
+
+      class Reporter
+        def initialize(@store : Store)
+        end
+
+        def rebuild
+          cache = MemoryStore.new
+          cache.warm
         end
       end
       CODE
     issues.size.should eq(1)
     issues[0].line.should be > 0
-    issues[0].message.should contain("Car constructs Engine.new")
-    issues[0].message.should contain("Car#start")
+    issues[0].message.should contain("Reporter constructs MemoryStore.new")
+    issues[0].message.should contain("Reporter#rebuild")
+    issues[0].message.should contain("2 implementations")
   end
 
-  it "flags constructions at class body level" do
+  it "treats a parameter restriction as using the abstraction" do
     issues = guard_project_issues(Awesome::Guards::HardcodedDependency, [<<-CODE])
-      class Repo
+      class Store
+        def warm; end
       end
 
-      class App
-        DEFAULT_REPO = Repo.new
+      class MemoryStore < Store
+        def warm; end
+      end
+
+      class RedisStore < Store
+        def warm; end
+      end
+
+      class Reporter
+        def rebuild(store : Store)
+          cache = MemoryStore.new
+          cache.warm
+        end
       end
       CODE
     issues.size.should eq(1)
-    issues[0].message.should contain("App class body")
   end
 
-  it "anchors issues to the file the construction is in" do
-    issues = guard_project_issues(Awesome::Guards::HardcodedDependency, [<<-ENGINE, <<-CAR])
-      class Engine
-        def run; end
-      end
-      ENGINE
-      class Car
-        def start
-          engine = Engine.new
-        end
-      end
-      CAR
-    issues.size.should eq(1)
-    issues[0].path.should eq("(test1)")
-  end
-
-  it "does not flag injections, value types and legitimate constructions" do
+  it "flags the module half of a seam too (include)" do
     issues = guard_project_issues(Awesome::Guards::HardcodedDependency, [<<-CODE])
-      class Engine
-        def run; end
+      module Backend
+        def call; end
       end
 
-      class Car
-        def initialize(@engine : Engine)   # injected
-          @spare = Engine.new              # initialize — allowed
+      class FastBackend
+        include Backend
+
+        def call; end
+      end
+
+      class SlowBackend
+        include Backend
+
+        def call; end
+      end
+
+      class Gate
+        def initialize(@backend : Backend)
         end
 
-        def build_fleet
-          fleet = Array{Car.new(self)}     # polymorphic + whitelisted Array
+        def open
+          FastBackend.new.call
         end
+      end
+      CODE
+    issues.size.should eq(1)
+    issues[0].message.should contain("Gate constructs FastBackend.new")
+    issues[0].message.should contain("Backend")
+  end
 
-        def self.factory
-          Car.new(Engine.new)              # factory class-method
-        end
+  it "stays silent when the owner never declared the abstraction" do
+    issues = guard_project_issues(Awesome::Guards::HardcodedDependency, [<<-CODE])
+      class Store
+        def warm; end
+      end
 
-        def fail
-          raise EngineError.new("boom")    # exception
-        end
+      class MemoryStore < Store
+        def warm; end
+      end
 
-        def parse(raw)
-          visitor = Parser.new(raw)        # nested type — own helper
-        end
+      class RedisStore < Store
+        def warm; end
+      end
 
-        private class Parser
-          def initialize(@raw : String); end
+      class Job
+        def run
+          RedisStore.new # no contradiction — maybe it genuinely needs Redis
         end
+      end
+      CODE
+    issues.should be_empty
+  end
 
-        def draw                           # project struct — value object
-          Vec.new(1, 2)
+  it "stays silent without a seam: no abstraction, single implementation" do
+    issues = guard_project_issues(Awesome::Guards::HardcodedDependency, [<<-CODE])
+      class Shape
+        def area; 0; end
+      end
+
+      class Parser
+        def build_shape
+          Shape.new # the parser's result — constructing it is the job
         end
+      end
+      CODE
+    issues.should be_empty
+  end
+
+  it "stays silent about external types and value objects" do
+    issues = guard_project_issues(Awesome::Guards::HardcodedDependency, [<<-CODE])
+      class Store
+        def warm; end
+      end
+
+      class MemoryStore < Store
+        def warm; end
+      end
+
+      class RedisStore < Store
+        def warm; end
       end
 
       struct Vec
         def initialize(@x : Int32, @y : Int32); end
       end
 
-      struct Point
-        def initialize(@x : Int32); end
+      class Worker
+        def initialize(@store : Store)
+        end
 
-        def twin
-          Point.new(@x)                    # structs carry data, not collaborators
+        def tick
+          Vec.new(1, 2)               # struct — data plumbing
+          HTTP::Client.new("x")       # external — no evidence available
         end
       end
       CODE
     issues.should be_empty
   end
 
-  it "stays silent about external types by default" do
+  it "keeps the classic skips: initialize, factories, exceptions, nested helpers" do
     issues = guard_project_issues(Awesome::Guards::HardcodedDependency, [<<-CODE])
-      class Car
-        def start
-          engine = Egui::Pos2.new(1, 2)    # external binding — data plumbing
+      class Store
+        def warm; end
+      end
+
+      class MemoryStore < Store
+        def warm; end
+      end
+
+      class RedisStore < Store
+        def warm; end
+      end
+
+      class Reporter
+        def initialize(@store : Store)
+          @extra = MemoryStore.new # initialize — wiring, allowed
         end
+
+        def self.build
+          MemoryStore.new          # factory class-method — its job
+        end
+
+        def pick : Store
+          MemoryStore.new          # return-type factory — choosing is its job
+        end
+
+        def fail
+          raise StoreError.new("boom")
+        end
+
+        private class Helper
+          def initialize(@raw : String); end
+        end
+
+        def parse(raw)
+          Helper.new(raw)          # own nested helper
+        end
+      end
+
+      class StoreError < Exception
       end
       CODE
     issues.should be_empty
   end
 
-  it "flags external types when flag_externals is on" do
-    issues = guard_project_issues(Awesome::Guards::HardcodedDependency, [<<-CODE], <<-YAML)
-      class Car
-        def start
-          client = HTTP::Client.new("example.com")
+  it "anchors issues to the file the construction is in" do
+    issues = guard_project_issues(Awesome::Guards::HardcodedDependency, [<<-STORES, <<-REPORTER])
+      class Store
+        def warm; end
+      end
+
+      class MemoryStore < Store
+        def warm; end
+      end
+
+      class RedisStore < Store
+        def warm; end
+      end
+      STORES
+      class Reporter
+        def initialize(@store : Store)
+        end
+
+        def rebuild
+          MemoryStore.new
+        end
+      end
+      REPORTER
+    issues.size.should eq(1)
+    issues[0].path.should eq("(test1)")
+  end
+
+  it "flags a construction of one sibling while another sibling is annotated" do
+    issues = guard_project_issues(Awesome::Guards::HardcodedDependency, [<<-CODE])
+      class Store
+        def warm; end
+      end
+
+      class MemoryStore < Store
+        def warm; end
+      end
+
+      class RedisStore < Store
+        def warm; end
+      end
+
+      class Reporter
+        def initialize(@backup : MemoryStore)
+        end
+
+        def rebuild
+          RedisStore.new # the family is declared, the choice is welded in
         end
       end
       CODE
-      HardcodedDependency:
-        flag_externals: true
-      YAML
     issues.size.should eq(1)
-    issues[0].message.should contain("Car constructs HTTP::Client.new")
   end
 
   it "respects the allowed whitelist by path and namespace" do
-    issues = guard_project_issues(Awesome::Guards::HardcodedDependency, [<<-CODE], <<-YAML)
-      class Car
-        def start
-          engine = MessageBus.new
-          engine.start
-        end
-      end
-      CODE
-      HardcodedDependency:
-        flag_externals: true
-        allowed: [MessageBus]
-      YAML
-    issues.should be_empty
-  end
-
-  it "requires min_dependencies hits per class before firing" do
     code = [<<-CODE]
-      class First
+      class Store
+        def warm; end
       end
 
-      class Second
+      class MemoryStore < Store
+        def warm; end
       end
 
-      class A
-        def x
-          First.new
+      class RedisStore < Store
+        def warm; end
+      end
+
+      class Reporter
+        def initialize(@store : Store)
         end
-      end
 
-      class B
-        def x
-          Second.new
+        def rebuild
+          MemoryStore.new
         end
       end
       CODE
     yaml = <<-YAML
       HardcodedDependency:
-        min_dependencies: 2
+        allowed: [MemoryStore]
       YAML
     guard_project_issues(Awesome::Guards::HardcodedDependency, code, yaml).should be_empty
-    guard_project_issues(Awesome::Guards::HardcodedDependency, code).size.should eq(2)
   end
 end

@@ -31,6 +31,10 @@ class Awesome::Index
     # Superclass path as written (a Generic parent stripped to its
     # name, leading `::` dropped); nil for Object / no parent / modules.
     getter superclass : String?
+    # Module names as written in `include` clauses (`include Store`
+    # records "Store") — the module half of an abstraction seam, next
+    # to `superclass` for the class half.
+    getter included_modules : Array(String)
     getter def_names : Array(String)
     # Names of `abstract def`s — contracts to be overridden, distinct
     # from concrete defs (guards that compare implementations exclude
@@ -46,6 +50,7 @@ class Awesome::Index
 
     def initialize(@qualified_name : String, @superclass : String?,
                    @decl : Crystal::ClassDef | Crystal::ModuleDef,
+                   @included_modules : Array(String),
                    @def_names : Array(String),
                    @abstract_def_names : Array(String), @origin : Origin)
     end
@@ -92,6 +97,9 @@ class Awesome::Index
       end
       other.abstract_def_names.each do |name|
         @abstract_def_names << name unless @abstract_def_names.includes?(name)
+      end
+      other.included_modules.each do |name|
+        @included_modules << name unless @included_modules.includes?(name)
       end
       @superclass ||= other.superclass
     end
@@ -160,6 +168,22 @@ class Awesome::Index
     end
   end
 
+  # Concrete implementations of an abstraction within the project: the
+  # direct subclasses of a class, or the entries `include`-ing a module.
+  # An abstraction with two or more of these is a seam the project
+  # already declared — guards take that as evidence, not a guess.
+  def implementations_of(entry : TypeEntry) : Array(TypeEntry)
+    if entry.module?
+      @entries.select do |e|
+        e.included_modules.any? do |name|
+          resolve(name).try(&.qualified_name) == entry.qualified_name
+        end
+      end
+    else
+      subclasses_of(entry)
+    end
+  end
+
   # Walks one source, registering a TypeEntry per ClassDef/ModuleDef
   # with the file's naming stack as its qualified name, and attaching
   # def names (regular and `abstract def`) to the innermost type.
@@ -176,6 +200,11 @@ class Awesome::Index
 
     def visit(node : Crystal::ModuleDef)
       push(node, nil)
+      true
+    end
+
+    def visit(node : Crystal::Include)
+      @nesting.last?.try { |entry| entry.included_modules << node.name.to_s }
       true
     end
 
@@ -199,7 +228,7 @@ class Awesome::Index
                      superclass : String?) : Nil
       names = @nesting.map(&.qualified_name) << node.name.to_s
       entry = TypeEntry.new(names.join("::"), superclass, node,
-        [] of String, [] of String,
+        [] of String, [] of String, [] of String,
         TypeEntry::Origin.new(@path, node.location))
       # add() folds a reopening into the canonical entry and hands it
       # back — defs written in this reopening attach to that one.

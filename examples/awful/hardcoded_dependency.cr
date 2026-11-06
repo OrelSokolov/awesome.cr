@@ -1,25 +1,28 @@
-# HardcodedDependency — a class constructing its own dependency.
-# The bad snippet for `awesome doc` and examples/awful; two issues:
-# Car#start welds in Engine, and Fleet#deploy welds in Car — the same
-# construction one level up. Both accept the dependency via
-# initialize instead and it becomes substitutable in tests.
+# HardcodedDependency — a class bypassing an abstraction it itself uses.
+# The bad snippet for `awesome doc` and examples/awful: Store already
+# has two implementations, Reporter declares it works with the
+# abstraction (`@store : Store`) and then news up a concrete sibling in
+# #rebuild — the seam is declared in the signature and welded shut one
+# line below.
 
-class Engine
-  def run
-    puts "vroom"
-  end
+class Store
+  def warm; end
 end
 
-class Car
-  def start
-    engine = Engine.new # hardcoded — can't be substituted in tests
-    engine.run
-  end
+class MemoryStore < Store
+  def warm; end
 end
 
-class Fleet
-  def deploy
-    car = Car.new # hardcoded again — inject the Car instead
-    car.start
+class RedisStore < Store
+  def warm; end
+end
+
+class Reporter
+  def initialize(@store : Store)
+  end
+
+  def rebuild
+    cache = MemoryStore.new # hardcoded — bypasses the Store seam
+    cache.warm
   end
 end
