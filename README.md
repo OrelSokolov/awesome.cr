@@ -49,8 +49,8 @@ Output:
 
 ```console
 src/demo.cr:1:1
-[StructurePacking] Reorder struct fields by decreasing alignment (largest first): sizeof can shrink from 56 to 48 bytes
 > struct Frame
+[StructurePacking] Reorder struct fields by decreasing alignment (largest first): sizeof can shrink from 56 to 48 bytes
 
 1 inspected, 1 issue.
 Your code is awful: 1 issue.

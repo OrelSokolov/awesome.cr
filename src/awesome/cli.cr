@@ -143,11 +143,11 @@ module Awesome::CLI
     report.sort!
     report.issues.each do |issue|
       puts issue.location_string.colorize.light_cyan
-      puts "[#{issue.guard}] #{issue.message}".colorize.light_yellow
       if excerpt = issue.excerpt
         puts "> #{excerpt}".colorize.light_gray
-        puts
       end
+      puts "[#{issue.guard}] #{issue.message}".colorize.light_yellow
+      puts if issue.excerpt
     end
     count = report.issues.size
     STDOUT << report.inspected << " inspected, " << count << ' ' \
