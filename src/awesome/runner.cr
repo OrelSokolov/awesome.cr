@@ -4,20 +4,29 @@ class Awesome::Runner
   getter only : Array(String)?
   getter except : Array(String)?
   getter kind : String?
+  getter level : String?
 
   def initialize(@config : Config, @only : Array(String)? = nil, @except : Array(String)? = nil,
-                 @kind : String? = nil)
+                 @kind : String? = nil, @level : String? = nil)
   end
 
   def run(paths : Array(String)) : Report
     only = @only
     except = @except
     kind = @kind
+    # A run at level N executes every guard at level N or below; an
+    # explicit `enabled:` in awesome.yml overrides the level in both
+    # directions (opt into a single psycho guard, silence a vibecoder one).
+    level_index = Guard::LEVELS.index(@level || Guard::DEFAULT_LEVEL).not_nil!
     guards = Guard.all.select do |g|
       next false if kind && g.kind != kind
       next false if only && !only.includes?(g.name)
       next false if except && except.includes?(g.name)
-      @config.guard(g.name).enabled?
+      case @config.guard(g.name).explicit_enabled
+      when true  then true
+      when false then false
+      else            g.level_index <= level_index
+      end
     end
 
     sources = collect_files(paths).map { |f| Source.new(f) }

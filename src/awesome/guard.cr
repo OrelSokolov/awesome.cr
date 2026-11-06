@@ -6,6 +6,7 @@
 #
 #   class Awesome::Guards::MyGuard < Awesome::Guard
 #     KIND              = "speed" # or "memory", "smell"
+#     LEVEL             = "senior" # or "vibecoder", "psycho"
 #     SHORT_DESCRIPTION = "..."
 #     GOOD_EXAMPLE      = "..."
 #     BAD_EXAMPLE       = "..."
@@ -38,6 +39,34 @@ abstract class Awesome::Guard
   # without a KIND) always runs.
   def self.kind : String
     {{ @type.constant(:KIND) || "all" }}
+  end
+
+  # Check levels, from lowest to highest. A run at level N executes
+  # every guard whose level is N or lower.
+  LEVELS        = {"vibecoder", "senior", "psycho"}
+  DEFAULT_LEVEL = "senior"
+
+  # How much a guard asks of the code (orthogonal to KIND). Levels pick
+  # the audience — choose by how long the code is going to live:
+  #
+  #   vibecoder — features first: startups validating a hypothesis,
+  #               throwaway code; the bar is "don't break on first run"
+  #               (leaked/double-freed C memory)
+  #   senior    — long-life code: maintainability pays off; best
+  #               practices whose fix does NOT hurt readability
+  #               (the default: on out of the box)
+  #   psycho    — experiments only (hot paths, allocation budgets) or
+  #               projects where the normal rules are unviable: trades
+  #               readability for a small win (`io << "a=" << a` instead
+  #               of puts "a=#{a}"); opt-in via --level psycho or
+  #               `level: psycho`
+  def self.level : String
+    lvl = {{ @type.constant(:LEVEL) || "senior" }}
+    LEVELS.includes?(lvl) ? lvl : "senior"
+  end
+
+  def self.level_index : Int32
+    LEVELS.index(level) || LEVELS.index(DEFAULT_LEVEL).not_nil!
   end
 
   def self.short_description : String

@@ -4,6 +4,14 @@
 #
 # Docs for every guard: `awesome doc` or docs/guards/ in the repository.
 
+# Check level (cumulative), picked by how long the code will live:
+# vibecoder (features first — don't break on first run) < senior
+# (long-life code, readability-neutral best practices — the default) <
+# psycho (readability traded for micro-wins; experiments and hard
+# requirements only, e.g. io << "a=" << a). This repo dogfoods at full
+# strictness:
+level: psycho
+
 include:
   - src/**/*.cr
   - spec/**/*.cr

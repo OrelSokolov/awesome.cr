@@ -12,7 +12,10 @@
 # false positive. `puts`/`print` (and `io.puts`/`io.print`) have IO
 # semantics by definition, so they always fire.
 class Awesome::Guards::InterpIntoIo < Awesome::Guard
-  KIND = "memory"
+  KIND  = "memory"
+  # The fix (io << "a=" << a) is flat-out harder to read than the
+  # interpolation — worth it only in hot paths, so the guard is opt-in.
+  LEVEL = "psycho"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for string interpolation inside IO calls — `io << "a\#{b}c"`,
     `puts "x=\#{x}"`, `io.print "v=\#{v}"`. The interpolation expands to

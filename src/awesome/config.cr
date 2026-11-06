@@ -9,6 +9,16 @@ class Awesome::GuardConfig
     bool("enabled", true)
   end
 
+  # Tri-state of the `enabled` key: true/false when the config sets it
+  # explicitly, nil when absent. The runner lets an explicit value
+  # override the check level in both directions (opt into one psycho
+  # guard, or silence one vibecoder guard) while absent guards follow
+  # the level filter.
+  def explicit_enabled : Bool?
+    v = value("enabled")
+    v.try &.as_bool?
+  end
+
   def bool(key : String, default : Bool) : Bool
     v = value(key)
     return default unless v
@@ -53,6 +63,7 @@ end
 #     - src/**/*.cr
 #   exclude:
 #     - lib/**
+#   level: senior            # vibecoder < senior (default) < psycho
 #   guards:
 #     StructurePacking:
 #       enabled: true
@@ -64,9 +75,10 @@ class Awesome::Config
   getter includes : Array(String)
   getter excludes : Array(String)
   getter guards : Hash(String, YAML::Any)
+  getter level : String?
 
   def initialize(@includes = DEFAULT_INCLUDE, @excludes = DEFAULT_EXCLUDE,
-                 @guards = {} of String => YAML::Any)
+                 @guards = {} of String => YAML::Any, @level = nil)
   end
 
   def self.locate(dir : String = Dir.current) : String?
@@ -94,7 +106,8 @@ class Awesome::Config
     if raw = doc["guards"]?.try &.as_h?
       raw.each { |name, v| guards[name.to_s] = v }
     end
-    new(includes, excludes, guards)
+    level = doc["level"]?.try(&.to_s.presence)
+    new(includes, excludes, guards, level)
   end
 
   def guard(name : String) : GuardConfig
