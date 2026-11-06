@@ -65,6 +65,14 @@ zero-false-positive check and grows toward full lifecycle analysis.
       deallocator twice within one statement block with no
       reassignment in between. Pairing is per statement list, so frees
       in sibling `if`/`else` branches never fire.
+- [x] **RaiseInLibCallback** — a `raise`/`reraise` inside a proc
+      literal passed to a lib-shim fun: the exception unwinds through
+      the library's C frames (undefined behaviour, in practice an
+      abort). Errors must be signalled via the callback's return value.
+- [x] **UncheckedLibPointer** — `.value` on the result of a
+      pointer-returning lib fun with no null check in between, both
+      chained (`LibFoo.find(x).value`) and stored
+      (`ptr = LibFoo.find(x); ptr.value` with no `if ptr` between).
 
 ### Later, memory
 

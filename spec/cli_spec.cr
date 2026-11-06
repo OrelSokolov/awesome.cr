@@ -7,7 +7,8 @@ describe Awesome::Guard do
      "StringConcatInLoop", "UnusedIndex"}.each do |name|
       Awesome::Guard.all.find { |g| g.name == name }.not_nil!.kind.should eq("speed")
     end
-    {"MemoryLeak", "DoubleFree", "FileReadLines", "NilableStructField",
+    {"MemoryLeak", "DoubleFree", "RaiseInLibCallback",
+     "UncheckedLibPointer", "FileReadLines", "NilableStructField",
      "BoolBitmask", "StructurePacking"}.each do |name|
       Awesome::Guard.all.find { |g| g.name == name }.not_nil!.kind.should eq("memory")
     end
@@ -17,7 +18,8 @@ describe Awesome::Guard do
     severity_of = ->(name : String) do
       Awesome::Guard.all.find { |g| g.name == name }.not_nil!.severity
     end
-    {"MemoryLeak", "DoubleFree"}.each do |name|
+    {"MemoryLeak", "DoubleFree", "RaiseInLibCallback",
+     "UncheckedLibPointer"}.each do |name|
       severity_of.call(name).should eq("bug")
     end
     # Smell guards default to style.

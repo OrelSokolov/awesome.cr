@@ -124,6 +124,7 @@ guards:
 | MemoryLeak | memory | vibecoder | C heap allocations from lib shims (`Lib*.malloc`) paired with a matching free in the project | [docs/guards/memory_leak.md](docs/guards/memory_leak.md) |
 | DoubleFree | memory | vibecoder | The same pointer never passed to a lib-shim deallocator twice without a reassignment in between | [docs/guards/double_free.md](docs/guards/double_free.md) |
 | RaiseInLibCallback | memory | vibecoder | `raise`/`reraise` inside a proc handed to a lib-shim fun — the exception unwinds through C frames (undefined behaviour) | [docs/guards/raise_in_lib_callback.md](docs/guards/raise_in_lib_callback.md) |
+| UncheckedLibPointer | memory | vibecoder | Pointers from `T*`-returning lib funs null-checked before `.value` — no `LibFoo.find(x).value` segfaults | [docs/guards/unchecked_lib_pointer.md](docs/guards/unchecked_lib_pointer.md) |
 | BoolBitmask | memory | senior | Structs with many Bool fields — a `@[Flags]` enum packs the same flags into one byte | [docs/guards/bool_bitmask.md](docs/guards/bool_bitmask.md) |
 | FileReadLines | memory | senior | `File.read_lines` slurps the whole file; `File.each_line` streams with flat memory use | [docs/guards/file_read_lines.md](docs/guards/file_read_lines.md) |
 | InterpIntoIo | memory | psycho | Interpolation inside IO calls (`io << "a#{b}c"`) — append the parts separately, zero intermediate Strings | [docs/guards/interp_into_io.md](docs/guards/interp_into_io.md) |

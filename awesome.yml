@@ -43,6 +43,10 @@ guards:
     enabled: true
     # raise/reraise inside a proc handed to a lib-shim fun unwinds
     # through C frames — undefined behaviour; no extra config
+  UncheckedLibPointer:
+    enabled: true
+    # .value on a T*-returning lib fun's result with no null check
+    # in between (chained or stored in a local/ivar); no extra config
   HardcodedDependency:
     enabled: true
     # fires only on a proven seam (an abstraction with 2+ project

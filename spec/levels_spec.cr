@@ -11,7 +11,8 @@ describe "check levels" do
     level_of = ->(name : String) do
       Awesome::Guard.all.find { |g| g.name == name }.not_nil!.level
     end
-    {"MemoryLeak", "DoubleFree"}.each do |name|
+    {"MemoryLeak", "DoubleFree", "RaiseInLibCallback",
+     "UncheckedLibPointer"}.each do |name|
       level_of.call(name).should eq("vibecoder")
     end
     {"InterpIntoIo", "SelfSortReassign"}.each do |name|
