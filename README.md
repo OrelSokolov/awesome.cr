@@ -82,6 +82,8 @@ guards:
 | StructurePacking | memory | Struct fields ordered by decreasing alignment — no bytes wasted on padding | [docs/guards/structure_packing.md](docs/guards/structure_packing.md) |
 | MemoryLeak | memory | C heap allocations from lib shims (`Lib*.malloc`) paired with a matching free in the file | [docs/guards/memory_leak.md](docs/guards/memory_leak.md) |
 | DoubleFree | memory | The same pointer never passed to a lib-shim deallocator twice without a reassignment in between | [docs/guards/double_free.md](docs/guards/double_free.md) |
+| HardcodedDependency | smell | A class constructing its own dependencies (`SomeConcrete.new` outside `initialize`) instead of accepting them via the constructor | [docs/guards/hardcoded_dependency.md](docs/guards/hardcoded_dependency.md) |
+| GodClass | smell | A class carrying too many responsibilities — measured by method count (25) and instance-variable count (10) | [docs/guards/god_class.md](docs/guards/god_class.md) |
 
 ## Development
 

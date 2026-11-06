@@ -31,3 +31,12 @@ guards:
     # the same pointer must not reach a deallocator twice without a
     # reassignment in between (same deallocator names as MemoryLeak):
     # deallocators: [free, xfree]
+  HardcodedDependency:
+    enabled: true
+    # the runner wiring its own pipeline types is plumbing, not a
+    # domain dependency (extends the built-in stdlib whitelist):
+    allowed: [Awesome::Source, Awesome::Report, Awesome::Issue, GuardConfig]
+  GodClass:
+    enabled: true
+    # max_methods: 25
+    # max_ivars: 10

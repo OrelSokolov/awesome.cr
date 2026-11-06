@@ -24,10 +24,11 @@ class Awesome::Index
     getter superclass : String?
     getter def_names : Array(String)
     getter path : String
-    getter line : Int32
+    getter location : Crystal::Location?
 
     def initialize(@qualified_name : String, @superclass : String?, @is_abstract : Bool,
-                   @def_names : Array(String), @path : String, @line : Int32)
+                   @is_module : Bool, @def_names : Array(String), @path : String,
+                   @location : Crystal::Location?)
     end
 
     def last_segment : String
@@ -36,6 +37,14 @@ class Awesome::Index
 
     def abstract? : Bool
       @is_abstract
+    end
+
+    def module? : Bool
+      @is_module
+    end
+
+    def line : Int32
+      @location.try(&.line_number) || 0
     end
   end
 
@@ -129,7 +138,7 @@ class Awesome::Index
                      superclass : String?, is_abstract : Bool) : Nil
       names = @nesting.map(&.qualified_name) << node.name.to_s
       entry = TypeEntry.new(names.join("::"), superclass, is_abstract,
-        [] of String, @path, node.location.try(&.line_number) || 0)
+        node.is_a?(Crystal::ModuleDef), [] of String, @path, node.location)
       @index.add(entry)
       @nesting << entry
     end
