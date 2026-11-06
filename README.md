@@ -106,6 +106,10 @@ guards:
 | DeepInheritance | smell | Inheritance chains three or more levels deep (hops between project classes; external parents cap the chain) | [docs/guards/deep_inheritance.md](docs/guards/deep_inheritance.md) |
 | SingleSubclass | smell | A non-abstract base with exactly one subclass — speculative hierarchy | [docs/guards/single_subclass.md](docs/guards/single_subclass.md) |
 | SubclassNoOverride | smell | A subclass overriding none of its parent's methods — inheritance for code reuse, not polymorphism | [docs/guards/subclass_no_override.md](docs/guards/subclass_no_override.md) |
+| UtilityClass | smell | A class whose methods are all `def self.` with no instance behaviour — a namespace that should be a module | [docs/guards/utility_class.md](docs/guards/utility_class.md) |
+| LongParameterList | smell | A method taking more parameters than a call site can read (default 7) — bundle them or split the method | [docs/guards/long_parameter_list.md](docs/guards/long_parameter_list.md) |
+| NotImplementedOverride | smell | A subclass overriding a parent's concrete method with only `raise NotImplementedError` — the promise, revoked (LSP) | [docs/guards/not_implemented_override.md](docs/guards/not_implemented_override.md) |
+| BoolFlagParameter | smell | A Bool parameter fed both literal `true` and `false` at call sites — two behaviours behind one name | [docs/guards/bool_flag_parameter.md](docs/guards/bool_flag_parameter.md) |
 
 ## Development
 

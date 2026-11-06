@@ -18,17 +18,24 @@
 class Awesome::Index
   # One indexed type (class, struct or module) as written.
   class TypeEntry
+    # Where the type was written — path and location always travel
+    # together (bundled so the constructor stays under LongParameterList).
+    record Origin, path : String, location : Crystal::Location?
+
     getter qualified_name : String # nesting stack + written name
     # Superclass path as written (a Generic parent stripped to its
     # name, leading `::` dropped); nil for Object / no parent / modules.
     getter superclass : String?
     getter def_names : Array(String)
-    getter path : String
-    getter location : Crystal::Location?
+    # Names of `abstract def`s — contracts to be overridden, distinct
+    # from concrete defs (guards that compare implementations exclude
+    # these; SubclassNoOverride keeps counting them).
+    getter abstract_def_names : Array(String)
+    getter origin : Origin
 
     def initialize(@qualified_name : String, @superclass : String?, @is_abstract : Bool,
-                   @is_module : Bool, @def_names : Array(String), @path : String,
-                   @location : Crystal::Location?)
+                   @is_module : Bool, @def_names : Array(String),
+                   @abstract_def_names : Array(String), @origin : Origin)
     end
 
     def last_segment : String
@@ -43,8 +50,16 @@ class Awesome::Index
       @is_module
     end
 
+    def path : String
+      @origin.path
+    end
+
+    def location : Crystal::Location?
+      @origin.location
+    end
+
     def line : Int32
-      @location.try(&.line_number) || 0
+      location.try(&.line_number) || 0
     end
   end
 
@@ -126,6 +141,7 @@ class Awesome::Index
     def visit(node : Crystal::Def)
       if entry = @nesting.last?
         entry.def_names << node.name
+        entry.abstract_def_names << node.name if node.abstract?
       end
       true
     end
@@ -138,7 +154,8 @@ class Awesome::Index
                      superclass : String?, is_abstract : Bool) : Nil
       names = @nesting.map(&.qualified_name) << node.name.to_s
       entry = TypeEntry.new(names.join("::"), superclass, is_abstract,
-        node.is_a?(Crystal::ModuleDef), [] of String, @path, node.location)
+        node.is_a?(Crystal::ModuleDef), [] of String, [] of String,
+        TypeEntry::Origin.new(@path, node.location))
       @index.add(entry)
       @nesting << entry
     end

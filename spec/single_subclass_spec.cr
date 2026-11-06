@@ -30,7 +30,7 @@ describe Awesome::Guards::SingleSubclass do
   it "exempts abstract bases — contracts written for extension" do
     issues = guard_project_issues(Awesome::Guards::SingleSubclass, [<<-CODE])
       abstract class StoreBase
-        abstract def key_for(name); end
+        abstract def key_for(name)
       end
 
       class RedisStore < StoreBase

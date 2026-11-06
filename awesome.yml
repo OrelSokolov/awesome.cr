@@ -40,6 +40,15 @@ guards:
     enabled: true
     # max_methods: 25
     # max_ivars: 10
+  LongParameterList:
+    enabled: true
+    # fire above this many parameters per def (5 = strict):
+    # max_params: 7
+  BoolFlagParameter:
+    enabled: true
+    # param names never flagged (both true and false literals at call
+    # sites are required to fire at all):
+    # allowed: [quiet]
   ToSWithoutIo:
     enabled: true
     # a zero-arg `to_s` override never runs on the io <</interpolation
