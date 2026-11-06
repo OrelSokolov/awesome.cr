@@ -1,0 +1,5 @@
+/.carat/
+/lib/
+/bin/awesome
+*.dwarf
+shard.lock

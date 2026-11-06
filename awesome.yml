@@ -1,0 +1,22 @@
+# awesome.yml — configuration for the awesome linter (rubocop.yml-style,
+# with guards instead of cops). Drop it in your project root; awesome
+# also works without one (sane defaults, all guards enabled).
+#
+# Docs for every guard: `awesome doc` or docs/guards/ in the repository.
+
+include:
+  - src/**/*.cr
+  - spec/**/*.cr
+
+exclude:
+  - lib/**
+  - .carat/**
+  - bin/**
+  - builds/**
+
+guards:
+  StructurePacking:
+    enabled: true
+    # @[Extern] structs must mirror a C header byte-for-byte, so by
+    # default they are only checked when you opt in:
+    check_extern: false

@@ -1,0 +1,20 @@
+name: awesome
+version: 0.1.0
+description: |
+  awesome — a next-generation semantic linter for Crystal. It checks
+  real best practices and performance tricks (struct packing, etc.),
+  not just style. Is your code awesome or awful?
+
+authors:
+  - Oleg Orlov <orelcokolov@gmail.com>
+
+license: MIT
+crystal: ">= 1.10.0"
+
+# carat: this shard is instantly installable as a binary —
+#   carat install OrelSokolov/awesome.cr
+# and then just run `awesome` in any project directory.
+# Plain `shards` ignores the extra key, this stays a normal shard.
+binaries:
+  awesome:
+    main: bin/awesome.cr
