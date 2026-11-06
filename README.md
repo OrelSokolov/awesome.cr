@@ -117,6 +117,9 @@ guards:
 
 | Guard | Kind | Level | Checks | Docs |
 |---|---|---|---|---|
+| SelfSizeIndex | all | vibecoder | `xs[xs.size]` (or `n = xs.size … xs[n]`) — indexing by the collection's own size is always one past the end | [docs/guards/self_size_index.md](docs/guards/self_size_index.md) |
+| InclusiveRangeIndex | all | vibecoder | `(0..xs.size).each { \|i\| xs[i] }` — the inclusive bound yields `i == xs.size` on the last pass; use `...` or `times` | [docs/guards/inclusive_range_index.md](docs/guards/inclusive_range_index.md) |
+| IndexLookahead | all | vibecoder | `xs.size.times { \|i\| xs[i + 1] }` — lookahead indexing past the loop's last element, unless the body guards the boundary | [docs/guards/index_lookahead.md](docs/guards/index_lookahead.md) |
 | StructurePacking | memory | senior | Struct fields ordered by decreasing alignment — no bytes wasted on padding | [docs/guards/structure_packing.md](docs/guards/structure_packing.md) |
 | MemoryLeak | memory | vibecoder | C heap allocations from lib shims (`Lib*.malloc`) paired with a matching free in the project | [docs/guards/memory_leak.md](docs/guards/memory_leak.md) |
 | DoubleFree | memory | vibecoder | The same pointer never passed to a lib-shim deallocator twice without a reassignment in between | [docs/guards/double_free.md](docs/guards/double_free.md) |
