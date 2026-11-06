@@ -9,6 +9,7 @@
 # Advisory: the bang version mutates the original object, so it is only
 # safe when nothing else holds a reference to it — the message says so.
 class Awesome::Guards::SelfSortReassign < Awesome::Guard
+  KIND = "speed"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for reassignments like `xs = xs.sort` (also uniq, reverse,
     shuffle, rotate). The non-bang method allocates a copy and the

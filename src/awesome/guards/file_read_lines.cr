@@ -9,6 +9,7 @@
 # The guard flags every `File.read_lines` call; if you genuinely need
 # the whole Array (random access, re-iteration), ignore the finding.
 class Awesome::Guards::FileReadLines < Awesome::Guard
+  KIND = "memory"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for `File.read_lines(…)` calls. They slurp the whole file
     and allocate every line's String up front — peak memory proportional

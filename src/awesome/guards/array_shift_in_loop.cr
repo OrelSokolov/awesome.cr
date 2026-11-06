@@ -10,6 +10,7 @@
 # detection matches while/until plus the common block iterators; a
 # missed iterator only means a false negative.
 class Awesome::Guards::ArrayShiftInLoop < Awesome::Guard
+  KIND = "speed"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for `shift`/`unshift` calls on arrays inside loops.
     Array#shift and #unshift are O(n) — every call moves the whole

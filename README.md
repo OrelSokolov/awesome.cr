@@ -34,8 +34,10 @@ $ crystal build --release bin/awesome.cr -o bin/awesome
 ## Usage
 
 ```console
-$ awesome                 # check the current directory
-$ awesome src lib foo.cr  # check specific paths
+$ awesome                 # check the current directory (all guards)
+$ awesome speed           # speed guards only
+$ awesome memory src lib/ # memory guards on specific paths
+$ awesome src foo.cr      # check specific paths
 $ awesome doc             # documentation for all guards
 $ awesome doc StructurePacking
 ```
@@ -74,11 +76,11 @@ guards:
 
 ## Guards
 
-| Guard | Checks | Docs |
-|---|---|---|
-| StructurePacking | Struct fields ordered by decreasing alignment — no bytes wasted on padding | [docs/guards/structure_packing.md](docs/guards/structure_packing.md) |
-| MemoryLeak | C heap allocations from lib shims (`Lib*.malloc`) paired with a matching free in the file | [docs/guards/memory_leak.md](docs/guards/memory_leak.md) |
-| DoubleFree | The same pointer never passed to a lib-shim deallocator twice without a reassignment in between | [docs/guards/double_free.md](docs/guards/double_free.md) |
+| Guard | Kind | Checks | Docs |
+|---|---|---|---|
+| StructurePacking | memory | Struct fields ordered by decreasing alignment — no bytes wasted on padding | [docs/guards/structure_packing.md](docs/guards/structure_packing.md) |
+| MemoryLeak | memory | C heap allocations from lib shims (`Lib*.malloc`) paired with a matching free in the file | [docs/guards/memory_leak.md](docs/guards/memory_leak.md) |
+| DoubleFree | memory | The same pointer never passed to a lib-shim deallocator twice without a reassignment in between | [docs/guards/double_free.md](docs/guards/double_free.md) |
 
 ## Development
 
@@ -91,6 +93,7 @@ A guard is a class in `src/awesome/guards/`:
 
 ```crystal
 class Awesome::Guards::MyGuard < Awesome::Guard
+  KIND              = "speed" # or "memory"
   SHORT_DESCRIPTION = "..."
   GOOD_EXAMPLE      = "..."
   BAD_EXAMPLE       = "..."

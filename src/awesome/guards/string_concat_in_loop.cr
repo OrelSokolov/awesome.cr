@@ -12,6 +12,7 @@
 # A rare iterator that is missed only means a false negative — the guard
 # never fires outside a loop.
 class Awesome::Guards::StringConcatInLoop < Awesome::Guard
+  KIND = "speed"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for string concatenation inside loops (`s += "…"` or
     `s = s + "…"`). Each iteration allocates a whole new String; append

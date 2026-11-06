@@ -10,6 +10,7 @@
 # written, so the guard only reports the saving and leaves the call to
 # you. @[Extern] structs are skipped (their layout mirrors C).
 class Awesome::Guards::BoolBitmask < Awesome::Guard
+  KIND = "memory"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for structs with many Bool fields. Every Bool field costs a
     byte; a @[Flags] enum (Crystal's bitflags) packs the same flags into

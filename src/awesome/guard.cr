@@ -5,6 +5,7 @@
 # truth), shown by `awesome doc` and mirrored in docs/guards/:
 #
 #   class Awesome::Guards::MyGuard < Awesome::Guard
+#     KIND              = "speed" # or "memory"
 #     SHORT_DESCRIPTION = "..."
 #     GOOD_EXAMPLE      = "..."
 #     BAD_EXAMPLE       = "..."
@@ -29,6 +30,13 @@ abstract class Awesome::Guard
 
   def self.name : String
     {{ @type.name.id.stringify.split("::").last }}
+  end
+
+  # The kind of problem a guard looks for — "speed" or "memory".
+  # Selects the guard set for `awesome speed` / `awesome memory`;
+  # "all" (the fallback for guards without a KIND) always runs.
+  def self.kind : String
+    {{ @type.constant(:KIND) || "all" }}
   end
 
   def self.short_description : String

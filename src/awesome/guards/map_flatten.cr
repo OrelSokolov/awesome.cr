@@ -6,6 +6,7 @@
 # block's results one by one straight into the output Array: one pass,
 # no intermediate allocation.
 class Awesome::Guards::MapFlatten < Awesome::Guard
+  KIND = "speed"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for `xs.map { … }.flatten` — the map allocates an
     intermediate Array that flatten immediately discards. `flat_map`

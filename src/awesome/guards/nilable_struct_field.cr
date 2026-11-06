@@ -11,6 +11,7 @@
 # member is a builtin type, so the byte cost stated in the message is
 # always exact. @[Extern] structs are skipped (their layout mirrors C).
 class Awesome::Guards::NilableStructField < Awesome::Guard
+  KIND = "memory"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for nilable fields (`Int64?`, `String | Nil`) inside structs.
     A nilable field is a tagged union — `{Int32 tag, payload}` — so it

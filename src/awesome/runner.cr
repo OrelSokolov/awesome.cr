@@ -3,14 +3,18 @@ class Awesome::Runner
   getter config : Config
   getter only : Array(String)?
   getter except : Array(String)?
+  getter kind : String?
 
-  def initialize(@config : Config, @only : Array(String)? = nil, @except : Array(String)? = nil)
+  def initialize(@config : Config, @only : Array(String)? = nil, @except : Array(String)? = nil,
+                 @kind : String? = nil)
   end
 
   def run(paths : Array(String)) : Report
     only = @only
     except = @except
+    kind = @kind
     guards = Guard.all.select do |g|
+      next false if kind && g.kind != kind
       next false if only && !only.includes?(g.name)
       next false if except && except.includes?(g.name)
       @config.guard(g.name).enabled?

@@ -12,6 +12,7 @@
 # proven from builtin types alone (custom structs, enums, ...) are
 # skipped, so the guard never fires a false positive.
 class Awesome::Guards::StructurePacking < Awesome::Guard
+  KIND = "memory"
   SHORT_DESCRIPTION = <<-TEXT
     Checks that struct fields are ordered by decreasing alignment so the
     struct wastes no bytes on padding. Crystal lays fields out in

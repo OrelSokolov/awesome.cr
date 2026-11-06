@@ -1,64 +1,69 @@
+require "option_parser"
 require "colorize"
 
 # Command-line interface.
 #
-#   awesome                  # check the current directory
-#   awesome src foo.cr lib/  # check specific paths
+#   awesome                  # check the current directory (all guards)
+#   awesome speed src foo.cr # check paths with speed guards only
+#   awesome memory lib/      # check paths with memory guards only
 #   awesome doc [GUARD]      # show guard documentation
 module Awesome::CLI
-  USAGE = <<-USAGE
-    awesome — is your Crystal code awesome or awful?
-
-    Usage:
-
-      awesome [paths]            Check paths (default: current dir, awesome.yml aware)
-      awesome doc [GUARD]        Show documentation for one or all guards
-      awesome --version          Show version
-
-    Options:
-
-      --config PATH   Path to awesome.yml (default: ./awesome.yml or ./.awesome.yml)
-      --only A,B      Run only these guards
-      --except A,B    Run all but these guards
-      -h, --help      Show this help
-      -v, --version   Show version
-
-    Exit status: 0 — awesome, 1 — awful (issues found), 2 — error.
-
-    Config: awesome.yml in the project root (rubocop.yml-style, guards
-    instead of cops). See https://github.com/OrelSokolov/awesome.cr
-    USAGE
+  COMMANDS = {"doc", "speed", "memory"}
 
   def self.run(args : Array(String) = ARGV) : Int32
+    argv = args.dup
+    first = argv.first?
+    command = (first && COMMANDS.includes?(first)) ? argv.shift : "check"
+
     paths = [] of String
     config_path = nil
     only = except = nil
-    command = :check
+    finished = false
+    code = 0
 
-    i = 0
-    while i < args.size
-      case arg = args[i]
-      when "doc"        then command = :doc
-      when "--config"   then config_path = args[i + 1]? || return usage_error("missing value for --config"); i += 1
-      when "--only"     then only = flag_list(args, i)
-      when "--except"   then except = flag_list(args, i)
-      when "-h", "--help"    then puts USAGE; return 0
-      when "-v", "--version" then puts "awesome #{Awesome::VERSION}"; return 0
-      when .starts_with?("-") then return usage_error("unknown option: #{arg}")
-      else paths << arg
+    parser = OptionParser.new do |p|
+      p.banner = <<-BANNER
+        awesome — is your Crystal code awesome or awful?
+
+        Usage:
+
+          awesome [paths]            Check paths with all guards (default: current dir, awesome.yml aware)
+          awesome speed [paths]      Check paths with speed guards only
+          awesome memory [paths]     Check paths with memory guards only
+          awesome doc [GUARD]        Show documentation for one or all guards
+
+        Options:
+        BANNER
+
+      p.on("--config PATH", "Path to awesome.yml (default: ./awesome.yml or ./.awesome.yml)") { |v| config_path = v }
+      p.on("--only A,B", "Run only these guards") { |v| only = split_list(v) }
+      p.on("--except A,B", "Run all but these guards") { |v| except = split_list(v) }
+      p.on("-v", "--version", "Show version") do
+        puts "awesome #{Awesome::VERSION}"
+        finished = true
       end
-      i += 1
+      p.on("-h", "--help", "Show this help") do
+        puts p
+        finished = true
+      end
+      p.invalid_option { |opt| code = usage_error("unknown option: #{opt}", p); finished = true }
+      p.missing_option { |opt| code = usage_error("missing value for #{opt}", p); finished = true }
     end
+    parser.parse(argv)
+    return code if finished
+
+    paths = argv
 
     case command
-    when :doc then doc(paths)
-    else           check(paths, config_path, only, except)
+    when "doc" then doc(paths)
+    else           check(paths, config_path, only, except, command)
     end
   end
 
-  def self.check(paths, config_path, only, except) : Int32
+  def self.check(paths, config_path, only, except, command) : Int32
     config = Config.load(config_path)
-    report = Runner.new(config, only, except).run(paths)
+    kind = command.in?("speed", "memory") ? command : nil
+    report = Runner.new(config, only, except, kind).run(paths)
     print_report(report)
     report.awesome? ? 0 : 1
   rescue ex : YAML::ParseException
@@ -77,7 +82,7 @@ module Awesome::CLI
       end
     end
     guards.each do |g|
-      puts g.name.colorize.bold
+      puts "#{g.name} (#{g.kind})".colorize.bold
       puts wrap(g.short_description, indent: "  ")
       puts "  Good example:"
       puts indent(g.good_example, "    ")
@@ -106,13 +111,13 @@ module Awesome::CLI
     end
   end
 
-  private def self.flag_list(args, i) : Array(String)
-    (args[i + 1]? || "").split(',').map(&.strip).reject(&.empty?)
+  private def self.split_list(value : String) : Array(String)
+    value.split(',').map(&.strip).reject(&.empty?)
   end
 
-  private def self.usage_error(message : String) : Int32
+  private def self.usage_error(message : String, parser : OptionParser) : Int32
     STDERR.puts "awesome: #{message}"
-    STDERR.puts USAGE
+    STDERR.puts parser
     2
   end
 

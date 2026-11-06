@@ -9,6 +9,7 @@
 # Convention-aware: an index named `_` (or `_something`) is treated as
 # intentionally unused and not flagged — that's already idiomatic.
 class Awesome::Guards::UnusedIndex < Awesome::Guard
+  KIND = "speed"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for `each_with_index` blocks whose index parameter is never
     used in the block body — plain `each` does the same job and skips
