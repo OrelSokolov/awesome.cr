@@ -23,11 +23,18 @@ class Awesome::Runner
     sources = collect_files(paths).map { |f| Source.new(f) }
     report = Report.new(sources.size)
 
-    sources.each do |source|
-      next unless source.ast
+    parsable = sources.select(&.ast)
+    parsable.each do |source|
       guards.each do |guard|
         report.add(guard.new.test(source, @config.guard(guard.name)))
       end
+    end
+
+    # Per-project pass: one call per guard with the whole collected set
+    # — the same file list as above (config excludes apply, so `lib/**`
+    # stays out by default and the set covers the current project only).
+    guards.each do |guard|
+      report.add(guard.new.test_project(parsable, @config.guard(guard.name)))
     end
 
     report

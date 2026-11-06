@@ -5,7 +5,7 @@
 # truth), shown by `awesome doc` and mirrored in docs/guards/:
 #
 #   class Awesome::Guards::MyGuard < Awesome::Guard
-#     KIND              = "speed" # or "memory"
+#     KIND              = "speed" # or "memory", "smell"
 #     SHORT_DESCRIPTION = "..."
 #     GOOD_EXAMPLE      = "..."
 #     BAD_EXAMPLE       = "..."
@@ -32,9 +32,10 @@ abstract class Awesome::Guard
     {{ @type.name.id.stringify.split("::").last }}
   end
 
-  # The kind of problem a guard looks for — "speed" or "memory".
-  # Selects the guard set for `awesome speed` / `awesome memory`;
-  # "all" (the fallback for guards without a KIND) always runs.
+  # The kind of problem a guard looks for — "speed", "memory" or
+  # "smell". Selects the guard set for `awesome speed` /
+  # `awesome memory` / `awesome smell`; "all" (the fallback for guards
+  # without a KIND) always runs.
   def self.kind : String
     {{ @type.constant(:KIND) || "all" }}
   end
@@ -51,5 +52,19 @@ abstract class Awesome::Guard
     {{ @type.constant(:BAD_EXAMPLE) || "" }}
   end
 
-  abstract def test(source : Awesome::Source, config : Awesome::GuardConfig) : Array(Awesome::Issue)
+  # Per-file check. The base implementation reports nothing; guards that
+  # inspect single files override it (all existing guards do).
+  def test(source : Awesome::Source, config : Awesome::GuardConfig) : Array(Awesome::Issue)
+    [] of Awesome::Issue
+  end
+
+  # Per-project check: called once with every collected source, after
+  # the per-file pass — for guards whose evidence spans files (type
+  # hierarchies, cross-file references). Issues are still attached to a
+  # concrete file:line, so `Report` is unchanged. The base implementation
+  # reports nothing; per-project guards build an `Awesome::Index` from
+  # the sources and override only this method.
+  def test_project(sources : Array(Awesome::Source), config : Awesome::GuardConfig) : Array(Awesome::Issue)
+    [] of Awesome::Issue
+  end
 end

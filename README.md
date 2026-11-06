@@ -37,6 +37,7 @@ $ crystal build --release bin/awesome.cr -o bin/awesome
 $ awesome                 # check the current directory (all guards)
 $ awesome speed           # speed guards only
 $ awesome memory src lib/ # memory guards on specific paths
+$ awesome smell src/      # smell guards only
 $ awesome src foo.cr      # check specific paths
 $ awesome doc             # documentation for all guards
 $ awesome doc StructurePacking

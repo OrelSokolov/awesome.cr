@@ -42,13 +42,14 @@ describe Awesome::Runner do
 end
 
 describe Awesome::CLI do
-  it "dispatches speed and memory commands" do
+  it "dispatches speed, memory and smell commands" do
     dir = File.join(Dir.tempdir, "awesome_cli_#{Random.new.hex(6)}")
     Dir.mkdir_p(dir)
     File.write(File.join(dir, "bad.cr"), "words = lines.map(&.split).flatten\n")
 
     Awesome::CLI.run(["speed", dir]).should eq(1)
     Awesome::CLI.run(["memory", dir]).should eq(0)
+    Awesome::CLI.run(["smell", dir]).should eq(0) # no smell guards yet
     Awesome::CLI.run([dir]).should eq(1)
   ensure
     FileUtils.rm_rf(dir) if dir

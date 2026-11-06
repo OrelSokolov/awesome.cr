@@ -6,9 +6,10 @@ require "colorize"
 #   awesome                  # check the current directory (all guards)
 #   awesome speed src foo.cr # check paths with speed guards only
 #   awesome memory lib/      # check paths with memory guards only
+#   awesome smell src/       # check paths with smell guards only
 #   awesome doc [GUARD]      # show guard documentation
 module Awesome::CLI
-  COMMANDS = {"doc", "speed", "memory"}
+  COMMANDS = {"doc", "speed", "memory", "smell"}
 
   def self.run(args : Array(String) = ARGV) : Int32
     argv = args.dup
@@ -30,6 +31,7 @@ module Awesome::CLI
           awesome [paths]            Check paths with all guards (default: current dir, awesome.yml aware)
           awesome speed [paths]      Check paths with speed guards only
           awesome memory [paths]     Check paths with memory guards only
+          awesome smell [paths]      Check paths with smell guards only
           awesome doc [GUARD]        Show documentation for one or all guards
 
         Options:
@@ -62,7 +64,8 @@ module Awesome::CLI
 
   def self.check(paths, config_path, only, except, command) : Int32
     config = Config.load(config_path)
-    kind = command.in?("speed", "memory") ? command : nil
+    # Any command other than "check" is a kind filter (speed/memory/smell).
+    kind = command == "check" ? nil : command
     report = Runner.new(config, only, except, kind).run(paths)
     print_report(report)
     report.awesome? ? 0 : 1

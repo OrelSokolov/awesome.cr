@@ -18,3 +18,17 @@ end
 def pack_issues(code : String, config_yaml : String? = nil) : Array(Awesome::Issue)
   guard_issues(Awesome::Guards::StructurePacking, code, config_yaml)
 end
+
+# Runs one guard's per-project pass over a set of snippets (one Source
+# per string) — the test_project twin of `guard_issues`. Config, when
+# given, is a YAML fragment keyed by the guard name.
+def guard_project_issues(guard_class : Awesome::Guard.class, codes : Array(String),
+                         config_yaml : String? = nil) : Array(Awesome::Issue)
+  sources = codes.map_with_index { |code, i| Awesome::Source.new("(test#{i})", code) }
+  config = if config_yaml
+    Awesome::GuardConfig.new(YAML.parse(config_yaml)[guard_class.name]?)
+  else
+    Awesome::GuardConfig.new(nil)
+  end
+  guard_class.new.test_project(sources, config)
+end
