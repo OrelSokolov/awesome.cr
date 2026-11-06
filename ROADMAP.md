@@ -50,6 +50,32 @@ search:
       - spec/**
 ```
 
+## v0.3 — memory guards
+
+C interop is where Crystal's GC stops helping: `LibFoo.malloc` memory
+must be freed by hand. The memory family starts with the minimal,
+zero-false-positive check and grows toward full lifecycle analysis.
+
+- [x] **MemoryLeak** — a file calling a lib-shim allocator
+      (`LibFoo.malloc` & co) must call the lib's deallocator at least
+      once. Works on the compiler's AST (`LibDef`/`FunDef`/`Call`) —
+      no C parsing needed.
+- [x] **DoubleFree** — the same variable passed to a lib-shim
+      deallocator twice within one statement block with no
+      reassignment in between. Pairing is per statement list, so frees
+      in sibling `if`/`else` branches never fire.
+
+### Later, memory
+
+- Cross-file pairing: malloc in one file freed in another (needs a
+  project-wide pass instead of per-source guards).
+- Per-call pairing: prove every allocation site reaches a free, not
+  just "at least one free exists in the file".
+- Ownership transfer: `LibFoo.malloc` results wrapped in a
+  finalizable class (`#finalize`/`#close`) count as freed.
+- DoubleFree: pair `Pointer#free` (Crystal-side frees), not only
+  lib-shim funs; free-after-`realloc` without reassignment.
+
 ## Later ideas
 
 - `awesome search copies` — big structs passed by value (memcpy on every

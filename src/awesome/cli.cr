@@ -119,16 +119,16 @@ module Awesome::CLI
   private def self.wrap(text : String, indent : String, width = 78) : String
     padded = text.gsub('\n', " ")
     lines = [] of String
-    line = ""
+    line = IO::Memory.new
     padded.split(' ').each do |word|
       if (indent.size + line.size + word.size + 1) > width
-        lines << line
-        line = ""
+        lines << line.to_s
+        line.clear
       end
-      line += " " unless line.empty?
-      line += word
+      line << ' ' unless line.size.zero?
+      line << word
     end
-    lines << line unless line.empty?
+    lines << line.to_s unless line.size.zero?
     lines.map { |l| "#{indent}#{l}" }.join('\n')
   end
 

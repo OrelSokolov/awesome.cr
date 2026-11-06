@@ -19,6 +19,16 @@ class Awesome::GuardConfig
     end
   end
 
+  def int(key : String, default : Int32) : Int32
+    v = value(key)
+    return default unless v
+    if (i = v.as_i?).nil?
+      default
+    else
+      i
+    end
+  end
+
   def strings(key : String, default : Array(String)) : Array(String)
     v = value(key)
     return default unless v

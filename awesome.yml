@@ -20,3 +20,14 @@ guards:
     # @[Extern] structs must mirror a C header byte-for-byte, so by
     # default they are only checked when you opt in:
     check_extern: false
+  MemoryLeak:
+    enabled: true
+    # fun names treated as C allocators / deallocators (exact match);
+    # a file that allocates via a lib shim must free via the same lib:
+    # allocators: [malloc, calloc, realloc, xmalloc, strdup]
+    # deallocators: [free, xfree]
+  DoubleFree:
+    enabled: true
+    # the same pointer must not reach a deallocator twice without a
+    # reassignment in between (same deallocator names as MemoryLeak):
+    # deallocators: [free, xfree]

@@ -77,6 +77,8 @@ guards:
 | Guard | Checks | Docs |
 |---|---|---|
 | StructurePacking | Struct fields ordered by decreasing alignment — no bytes wasted on padding | [docs/guards/structure_packing.md](docs/guards/structure_packing.md) |
+| MemoryLeak | C heap allocations from lib shims (`Lib*.malloc`) paired with a matching free in the file | [docs/guards/memory_leak.md](docs/guards/memory_leak.md) |
+| DoubleFree | The same pointer never passed to a lib-shim deallocator twice without a reassignment in between | [docs/guards/double_free.md](docs/guards/double_free.md) |
 
 ## Development
 
