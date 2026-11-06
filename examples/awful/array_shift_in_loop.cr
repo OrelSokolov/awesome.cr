@@ -3,3 +3,8 @@ queue = ["a", "b", "c"]
 while item = queue.shift?
   puts item
 end
+
+stack = [] of Int32
+10.times do
+  stack.unshift(next_id)
+end

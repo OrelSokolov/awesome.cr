@@ -1,10 +1,10 @@
 # Plan: zero-allocations / zero-copy guards
 
-Status: patterns 1, 2, 3 and 5 are implemented (as `InterpIntoIo`,
-`StringConcatInLoop`, `SelectCompareZero` and `FileReadLines`
-respectively — the catalog in `performance_top50.md` split them into
-separate single-purpose guards). Pattern 4 (`ToSWithoutIo`, config
-`check_to_s`) and the `@[ZeroAlloc]` annotation are still open.
+Status: patterns 1, 2, 3, 4 and 5 are implemented (as `InterpIntoIo`,
+`StringConcatInLoop`, `SelectCompareZero`, `ToSWithoutIo` and
+`FileReadLines` respectively — the catalog in `performance_top50.md`
+split them into separate single-purpose guards). Only the `@[ZeroAlloc]`
+annotation is still open.
 
 Обнаружение мест, где «просятся» оптимизации по zero allocations / zero copy,
 по AST (`Crystal::Parser` — тот же, что использует `awesome` через

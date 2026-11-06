@@ -1,5 +1,10 @@
-# NilableStructField — Int64? is a 16-byte tagged union, not 8.
+# NilableStructField — a nilable field is a tagged union, not a payload.
 struct Session
-  getter id : Int64?
+  getter id : Int64? # 16 bytes + a branch, not 8
   getter closed : Bool
+end
+
+struct Slot
+  getter label : String? # pointer payload, still tagged
+  getter weight : Int32
 end

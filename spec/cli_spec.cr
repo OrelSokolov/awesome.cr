@@ -62,4 +62,8 @@ describe Awesome::CLI do
     Awesome::CLI.run(["--config"]).should eq(2)
     Awesome::CLI.run(["--only", "MapFlatten", "--version"]).should eq(0)
   end
+
+  it "lists registered guards" do
+    Awesome::CLI.run(["guards"]).should eq(0)
+  end
 end

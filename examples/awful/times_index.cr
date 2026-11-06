@@ -2,3 +2,7 @@
 items.size.times do |i|
   process items[i]
 end
+
+rows.size.times do |j|
+  render rows[j]
+end

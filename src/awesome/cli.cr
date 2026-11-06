@@ -8,8 +8,9 @@ require "colorize"
 #   awesome memory lib/      # check paths with memory guards only
 #   awesome smell src/       # check paths with smell guards only
 #   awesome doc [GUARD]      # show guard documentation
+#   awesome guards           # list registered guards — total and by kind
 module Awesome::CLI
-  COMMANDS = {"doc", "speed", "memory", "smell"}
+  COMMANDS = {"doc", "speed", "memory", "smell", "guards"}
 
   def self.run(args : Array(String) = ARGV) : Int32
     argv = args.dup
@@ -33,6 +34,7 @@ module Awesome::CLI
           awesome memory [paths]     Check paths with memory guards only
           awesome smell [paths]      Check paths with smell guards only
           awesome doc [GUARD]        Show documentation for one or all guards
+          awesome guards             List registered guards (total and by kind)
 
         Options:
         BANNER
@@ -57,8 +59,9 @@ module Awesome::CLI
     paths = argv
 
     case command
-    when "doc" then doc(paths)
-    else           check(paths, config_path, only, except, command)
+    when "doc"    then doc(paths)
+    when "guards" then guards_reference
+    else               check(paths, config_path, only, except, command)
     end
   end
 
@@ -91,6 +94,25 @@ module Awesome::CLI
       puts indent(g.good_example, "    ")
       puts "  Bad example:"
       puts indent(g.bad_example, "    ")
+      puts
+    end
+    0
+  end
+
+  # Reference listing: how many guards are registered in total and
+  # which ones, grouped by kind (speed / memory / smell).
+  KIND_ORDER = {"speed", "memory", "smell"}
+
+  def self.guards_reference : Int32
+    all = Awesome::Guard.all
+    STDOUT << "awesome " << Awesome::VERSION << " — " << all.size << ' ' \
+      << "guard".pluralize(all.size) << " registered" << '\n' << '\n'
+    kinds = all.map(&.kind).uniq
+    kinds = kinds.sort_by { |k| {KIND_ORDER.index(k) || KIND_ORDER.size, k} }
+    kinds.each do |kind|
+      names = all.select(&.kind.==(kind)).map(&.name).sort
+      STDOUT << kind << " (" << names.size << "):" << '\n'
+      names.each { |name| STDOUT << "  " << name << '\n' }
       puts
     end
     0

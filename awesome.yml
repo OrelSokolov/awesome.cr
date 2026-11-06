@@ -40,3 +40,8 @@ guards:
     enabled: true
     # max_methods: 25
     # max_ivars: 10
+  ToSWithoutIo:
+    enabled: true
+    # a zero-arg `to_s` override never runs on the io <</interpolation
+    # paths; switch off if the zero-arg form is deliberate API:
+    # check_to_s: true

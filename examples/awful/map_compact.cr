@@ -1,2 +1,3 @@
 # MapCompact — the map's Array is walked a second time to drop nils.
 names = users.map { |u| u.email }.compact
+tracking = orders.map { |o| o.tracking_id }.compact

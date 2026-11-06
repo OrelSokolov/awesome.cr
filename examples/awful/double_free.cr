@@ -8,3 +8,8 @@ def close(blob : Void*)
   puts "closed"
   LibGeo.free(blob) # double free corrupts the C heap
 end
+
+def reset(cache : Void*)
+  LibGeo.free(cache)
+  LibGeo.free(cache) # same shape in a second block — still a double free
+end
