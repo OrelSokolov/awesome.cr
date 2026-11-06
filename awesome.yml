@@ -39,6 +39,10 @@ guards:
     # the same pointer must not reach a deallocator twice without a
     # reassignment in between (same deallocator names as MemoryLeak):
     # deallocators: [free, xfree]
+  RaiseInLibCallback:
+    enabled: true
+    # raise/reraise inside a proc handed to a lib-shim fun unwinds
+    # through C frames — undefined behaviour; no extra config
   HardcodedDependency:
     enabled: true
     # fires only on a proven seam (an abstraction with 2+ project
