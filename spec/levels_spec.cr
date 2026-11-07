@@ -12,7 +12,7 @@ describe "check levels" do
       Awesome::Guard.all.find { |g| g.name == name }.not_nil!.level
     end
     {"MemoryLeak", "DoubleFree", "RaiseInLibCallback",
-     "UncheckedLibPointer"}.each do |name|
+     "UncheckedLibPointer", "JunkFile"}.each do |name|
       level_of.call(name).should eq("vibecoder")
     end
     {"InterpIntoIo", "SelfSortReassign"}.each do |name|

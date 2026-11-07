@@ -108,3 +108,7 @@ guards:
     # a zero-arg `to_s` override never runs on the io <</interpolation
     # paths; switch off if the zero-arg form is deliberate API:
     # check_to_s: true
+  JunkFile:
+    enabled: true
+    # one class per file, one nested module per module, one nested
+    # class per class — no thresholds, no extra config

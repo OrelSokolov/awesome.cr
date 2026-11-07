@@ -56,6 +56,12 @@
 "guards.GodClass.main": "%{display}: %{methods} and %{ivars} — too much for one class (thresholds: %{methods_threshold} methods / %{ivars_threshold} ivars); split the responsibilities"
 "guards.DeepInheritance.main.one": "%{name} sits %{count} level deep in %{chain} — prefer composition (have a collaborator instead of being one)"
 "guards.DeepInheritance.main.other": "%{name} sits %{count} levels deep in %{chain} — prefer composition (have a collaborator instead of being one)"
+"guards.JunkFile.classes.one": "%{count} class in one file (%{names}) — a junk file: one class per file, move the rest into their own files"
+"guards.JunkFile.classes.other": "%{count} classes in one file (%{names}) — a junk file: one class per file, move the rest into their own files"
+"guards.JunkFile.nested_modules.one": "module %{name} nests %{count} module (%{names}) — at most one nested module per module; spread them into their own folders and files"
+"guards.JunkFile.nested_modules.other": "module %{name} nests %{count} modules (%{names}) — at most one nested module per module; spread them into their own folders and files"
+"guards.JunkFile.nested_classes.one": "class %{name} nests %{count} class (%{names}) — at most one nested class per class; spread them into their own folders and files"
+"guards.JunkFile.nested_classes.other": "class %{name} nests %{count} classes (%{names}) — at most one nested class per class; spread them into their own folders and files"
 
 
 "guards.AggregateAfterTransform.main": "map { … }.%{name} allocates an intermediate Array just to aggregate it away; %{fix}"
