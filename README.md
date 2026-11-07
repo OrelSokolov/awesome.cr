@@ -125,6 +125,12 @@ guards:
 | DoubleFree | memory | vibecoder | The same pointer never passed to a lib-shim deallocator twice without a reassignment in between | [docs/guards/double_free.md](docs/guards/double_free.md) |
 | RaiseInLibCallback | memory | vibecoder | `raise`/`reraise` inside a proc handed to a lib-shim fun — the exception unwinds through C frames (undefined behaviour) | [docs/guards/raise_in_lib_callback.md](docs/guards/raise_in_lib_callback.md) |
 | UncheckedLibPointer | memory | vibecoder | Pointers from `T*`-returning lib funs null-checked before `.value` — no `LibFoo.find(x).value` segfaults | [docs/guards/unchecked_lib_pointer.md](docs/guards/unchecked_lib_pointer.md) |
+| UnpinnedLibCallback | memory | vibecoder | Proc literals and `Box.box` passed inline to storing lib funs (`on_*`, `set_*`…) keep no reference — the GC can free the closure the library still calls | [docs/guards/unpinned_lib_callback.md](docs/guards/unpinned_lib_callback.md) |
+| ToUnsafeEscape | memory | vibecoder | `x.to_unsafe` never stored in an ivar/class var/constant or returned — the raw pointer outlives the GC-managed bytes it points into | [docs/guards/to_unsafe_escape.md](docs/guards/to_unsafe_escape.md) |
+| RaiseInFunDef | memory | vibecoder | `raise`/`reraise` inside a `fun` def (a C entry point) — the exception unwinds into the C caller (undefined behaviour) | [docs/guards/raise_in_fun_def.md](docs/guards/raise_in_fun_def.md) |
+| SliceAsCString | memory | senior | `x.to_unsafe` into a `UInt8*`/`Char*` param with no length argument — a Slice receiver is not NUL-terminated, C overreads the buffer | [docs/guards/slice_as_c_string.md](docs/guards/slice_as_c_string.md) |
+| StoredLibPointer | memory | senior | Raw pointers from lib funs not silently stored in fields — the ownership contract is C-side and invisible; wrap with `#close`/`#finalize` or a handle | [docs/guards/stored_lib_pointer.md](docs/guards/stored_lib_pointer.md) |
+| PointerOfEscape | memory | senior | `pointerof(x)` never handed to a storing lib fun or field — the address is stable, its GC-managed owner is not | [docs/guards/pointer_of_escape.md](docs/guards/pointer_of_escape.md) |
 | BoolBitmask | memory | senior | Structs with many Bool fields — a `@[Flags]` enum packs the same flags into one byte | [docs/guards/bool_bitmask.md](docs/guards/bool_bitmask.md) |
 | FileReadLines | memory | senior | `File.read_lines` slurps the whole file; `File.each_line` streams with flat memory use | [docs/guards/file_read_lines.md](docs/guards/file_read_lines.md) |
 | InterpIntoIo | memory | psycho | Interpolation inside IO calls (`io << "a#{b}c"`) — append the parts separately, zero intermediate Strings | [docs/guards/interp_into_io.md](docs/guards/interp_into_io.md) |
@@ -152,6 +158,7 @@ guards:
 | LongParameterList | code | senior | A method taking more parameters than a call site can read (default 7) — bundle them or split the method | [docs/guards/long_parameter_list.md](docs/guards/long_parameter_list.md) |
 | NotImplementedOverride | code | senior | A subclass overriding a parent's concrete method with only `raise NotImplementedError` — the promise, revoked (LSP) | [docs/guards/not_implemented_override.md](docs/guards/not_implemented_override.md) |
 | BoolFlagParameter | code | senior | A Bool parameter fed both literal `true` and `false` at call sites — two behaviours behind one name | [docs/guards/bool_flag_parameter.md](docs/guards/bool_flag_parameter.md) |
+| CliStdoutEpipe | code | senior | A CLI that dies when its stdout reader walks away — top-level output or a shard.yml binary with no EPIPE handling (`foo \| head` → `IO::Error: Broken pipe`) | [docs/guards/cli_stdout_epipe.md](docs/guards/cli_stdout_epipe.md) |
 
 ## Development
 

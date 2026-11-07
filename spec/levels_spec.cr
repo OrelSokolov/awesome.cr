@@ -28,7 +28,7 @@ describe "check levels" do
   it "runs guards at or below the selected level" do
     dir = File.join(Dir.tempdir, "awesome_levels_#{Random.new.hex(6)}")
     Dir.mkdir_p(dir)
-    File.write(File.join(dir, "bad.cr"), %(puts "a\#{b}c"\n))
+    File.write(File.join(dir, "bad.cr"), %(io << "a\#{b}c"\n))
 
     config = Awesome::Config.new
     default = Awesome::Runner.new(config).run([dir])
@@ -46,7 +46,7 @@ describe "check levels" do
   it "lets an explicit enabled override the level in both directions" do
     dir = File.join(Dir.tempdir, "awesome_levels_#{Random.new.hex(6)}")
     Dir.mkdir_p(dir)
-    File.write(File.join(dir, "bad.cr"), %(puts "a\#{b}c"\n))
+    File.write(File.join(dir, "bad.cr"), %(io << "a\#{b}c"\n))
 
     opted_in = Awesome::Config.from_yaml(<<-YAML)
       guards:

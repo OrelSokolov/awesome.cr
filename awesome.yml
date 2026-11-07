@@ -47,6 +47,43 @@ guards:
     enabled: true
     # .value on a T*-returning lib fun's result with no null check
     # in between (chained or stored in a local/ivar); no extra config
+  UnpinnedLibCallback:
+    enabled: true
+    # a proc literal or Box.box passed inline to a storing lib fun
+    # (set_/register_/on_/... names) — the GC can free the closure;
+    # extra fun names that store their callback:
+    # storage_funs: [run_with]
+    # storing-looking names that actually don't store (suppression):
+    # ignore_funs: [on_init]
+  ToUnsafeEscape:
+    enabled: true
+    # x.to_unsafe stored in an ivar/class var/constant or returned —
+    # the pointer outlives the GC-managed bytes; no extra config
+  RaiseInFunDef:
+    enabled: true
+    # raise/reraise inside a `fun` def (a C entry point) escapes into
+    # the caller's foreign frames — undefined behaviour; no extra
+    # config
+  SliceAsCString:
+    enabled: true
+    # x.to_unsafe passed to a UInt8*/Int8*/Char* param of a lib fun
+    # with no length argument — a Slice receiver is not NUL-terminated;
+    # argument names that count as "a length travels with it":
+    # length_names: [size, bytesize, length, len, count, cap]
+  StoredLibPointer:
+    enabled: true
+    # a raw pointer from a lib fun stored in an ivar/class var/const —
+    # ownership is a C-side contract the field doesn't express;
+    # allocator funs are MemoryLeak's concern, skipped here:
+    # allocators: [malloc, calloc, realloc, xmalloc, strdup]
+  PointerOfEscape:
+    enabled: true
+    # pointerof(x) handed to a storing lib fun or kept in a field —
+    # the address outlives its GC-managed owner; extra fun names that
+    # store their argument:
+    # storage_funs: [observe]
+    # storing-looking names that actually don't store (suppression):
+    # ignore_funs: [register_my_thread]
   HardcodedDependency:
     enabled: true
     # fires only on a proven seam (an abstraction with 2+ project
