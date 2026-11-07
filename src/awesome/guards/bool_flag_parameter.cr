@@ -81,10 +81,9 @@ class Awesome::Guards::BoolFlagParameter < Awesome::Guard
       Awesome::Issue.new(
         param.path,
         "BoolFlagParameter",
-        "#{possessive(param.method_name)} #{param.param_name} is a flag argument — " \
-        "called with both true and false, two behaviours behind one name; " \
-        "two methods (like #{param.method_name} / #{param.method_name}!) " \
-        "say it without the branch",
+        Awesome::I18n.t("guards.BoolFlagParameter.main",
+          method_possessive: possessive(param.method_name), param: param.param_name,
+          method: param.method_name),
         param.location,
         source.try(&.excerpt_at(param.line))
       )

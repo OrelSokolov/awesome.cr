@@ -50,8 +50,7 @@ class Awesome::Guards::UnusedIndex < Awesome::Guard
           @issues << Awesome::Issue.new(
             @source.path,
             "UnusedIndex",
-            "Block index '#{index.name}' is never used; plain `each` does the " \
-            "same job and skips the index bookkeeping",
+            Awesome::I18n.t("guards.UnusedIndex.main", index: index.name),
             node.location,
             @source.excerpt_at(node.location.try(&.line_number) || 0)
           )

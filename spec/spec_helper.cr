@@ -2,6 +2,12 @@ require "spec"
 require "../src/awesome"
 require "../src/awesome/guards/*"
 
+# Specs assert English message text — pin the locale (and the env it
+# could be detected from) so a ru_RU machine runs the suite the same.
+ENV.delete("LC_ALL")
+ENV["LANG"] = "en_US.UTF-8"
+Spec.before_each { Awesome::I18n.locale = "en" }
+
 # Runs one guard over a snippet and returns its issues. Config, when
 # given, is a YAML fragment keyed by the guard name (like awesome.yml's
 # `guards:` section for that single guard).

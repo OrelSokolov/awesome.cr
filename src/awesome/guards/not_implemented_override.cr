@@ -75,11 +75,9 @@ class Awesome::Guards::NotImplementedOverride < Awesome::Guard
         issues << Awesome::Issue.new(
           source.path,
           "NotImplementedOverride",
-          "#{entry.qualified_name}##{raise_def.method_name} only raises " \
-          "NotImplementedError but #{parent.qualified_name}#" \
-          "#{raise_def.method_name} is concrete — the subclass can't stand " \
-          "where the parent stood; keep the behaviour, don't inherit, or " \
-          "declare it abstract in the parent",
+          Awesome::I18n.t("guards.NotImplementedOverride.main",
+            subclass: entry.qualified_name, parent: parent.qualified_name,
+            method: raise_def.method_name),
           raise_def.location,
           source.excerpt_at(raise_def.line)
         )

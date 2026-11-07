@@ -74,8 +74,7 @@ class Awesome::Guards::ArrayConcatInLoop < Awesome::Guard
       @issues << Awesome::Issue.new(
         @source.path,
         "ArrayConcatInLoop",
-        "Array += inside a loop copies the whole Array every iteration " \
-        "(O(n²) total); append in place with << instead",
+        Awesome::I18n.t("guards.ArrayConcatInLoop.main"),
         node.location,
         @source.excerpt_at(node.location.try(&.line_number) || 0)
       )

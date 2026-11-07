@@ -49,8 +49,7 @@ class Awesome::Guards::FileReadLines < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "FileReadLines",
-          "File.read_lines reads the whole file into memory before the first " \
-          "line is used; File.each_line streams with flat memory use",
+          Awesome::I18n.t("guards.FileReadLines.main"),
           node.location,
           @source.excerpt_at(node.location.try(&.line_number) || 0)
         )

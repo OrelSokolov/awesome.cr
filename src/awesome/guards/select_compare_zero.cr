@@ -79,9 +79,10 @@ class Awesome::Guards::SelectCompareZero < Awesome::Guard
       @issues << Awesome::Issue.new(
         @source.path,
         "SelectCompareZero",
-        "select { … }.#{node.name}#{node.args.first? ? " " + node.args.first.to_s : ""} " \
-        "builds the filtered Array just to compare with zero; " \
-        "#{replacement} answers without it",
+        Awesome::I18n.t("guards.SelectCompareZero.main",
+          name: node.name,
+          arg: node.args.first? ? " " + node.args.first.to_s : "",
+          replacement: replacement),
         node.location,
         @source.excerpt_at(node.location.try(&.line_number) || 0)
       )

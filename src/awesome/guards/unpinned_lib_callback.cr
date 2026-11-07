@@ -20,9 +20,9 @@
 # Fire-and-forget shims (`LibC.qsort(...)`) are skipped by design: the
 # closure is stack-reachable for the whole call there.
 class Awesome::Guards::UnpinnedLibCallback < Awesome::Guard
-  KIND     = "memory"
-  LEVEL    = "vibecoder" # a delayed use-after-free, not a style nit
-  SEVERITY = "bug"       # runtime-breaker: the GC frees a stored closure
+  KIND              = "memory"
+  LEVEL             = "vibecoder" # a delayed use-after-free, not a style nit
+  SEVERITY          = "bug"       # runtime-breaker: the GC frees a stored closure
   SHORT_DESCRIPTION = <<-TEXT
     Checks that closures passed to storing lib-shim funs are kept
     alive. A proc literal (`->(x) { ... }`) or `Box.box(x)` passed
@@ -56,8 +56,8 @@ class Awesome::Guards::UnpinnedLibCallback < Awesome::Guard
     CODE
 
   # Fun names that say the library keeps the callback past the call.
-  STORAGE_PREFIXES    = {"set_", "register_", "on_", "add_", "attach_", "subscribe_"}
-  STORAGE_SUBSTRINGS  = {"callback", "handler", "listener", "hook"}
+  STORAGE_PREFIXES   = {"set_", "register_", "on_", "add_", "attach_", "subscribe_"}
+  STORAGE_SUBSTRINGS = {"callback", "handler", "listener", "hook"}
 
   def test(source : Awesome::Source, config : Awesome::GuardConfig) : Array(Awesome::Issue)
     visitor = Visitor.new(source, config.strings("storage_funs", [] of String),
@@ -110,11 +110,7 @@ class Awesome::Guards::UnpinnedLibCallback < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "UnpinnedLibCallback",
-          "closure passed inline to `#{call}`: if the library stores it, " \
-          "nothing on the Crystal side references the proc once the call " \
-          "returns, and the GC may free it — the next callback from C is " \
-          "a use-after-free. Assign the proc to a constant or class " \
-          "variable and pass that (or pin it with `GC.add_root`)",
+          Awesome::I18n.t("guards.UnpinnedLibCallback.main", call: call),
           arg.location,
           @source.excerpt_at(arg.location.try(&.line_number) || 0)
         )
@@ -125,11 +121,7 @@ class Awesome::Guards::UnpinnedLibCallback < Awesome::Guard
           @issues << Awesome::Issue.new(
             @source.path,
             "UnpinnedLibCallback",
-            "`#{arg}` passed inline to `#{call}`: the box is GC-managed " \
-            "and unreferenced once the call returns — if the library " \
-            "stores the pointer, the box can be collected and the later " \
-            "`Box.unbox` from C is a use-after-free. Keep the box in a " \
-            "constant or class variable and pass that",
+            Awesome::I18n.t("guards.UnpinnedLibCallback.boxed", box: arg, call: call),
             arg.location,
             @source.excerpt_at(arg.location.try(&.line_number) || 0)
           )

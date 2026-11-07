@@ -61,9 +61,8 @@ class Awesome::Guards::DeepInheritance < Awesome::Guard
       issues << Awesome::Issue.new(
         entry.path,
         "DeepInheritance",
-        "#{entry.qualified_name} sits #{chain.size} #{"level".pluralize(chain.size)} deep " \
-        "in #{chain.join(" < ")} — prefer composition (have a " \
-        "collaborator instead of being one)",
+        Awesome::I18n.t("guards.DeepInheritance.main",
+          name: entry.qualified_name, count: chain.size, chain: chain.join(" < ")),
         entry.location,
         by_path[entry.path]?.try(&.excerpt_at(entry.line))
       )

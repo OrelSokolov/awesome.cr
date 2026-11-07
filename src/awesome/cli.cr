@@ -18,32 +18,27 @@ module Awesome::CLI
     first = argv.first?
     command = (first && COMMANDS.includes?(first)) ? argv.shift : "check"
 
+    # The help banner and option descriptions are localized, so the
+    # language must be known before the parser is built — pre-scan
+    # --lang (the parser validates it fully after parse).
+    Awesome::I18n.locale = Awesome::I18n.resolve(pre_scan_lang(argv))
+
     paths = [] of String
     config_path = nil
-    only = except = level = nil
+    only = except = level = lang = nil
     finished = false
     code = 0
 
+    # doc/guards print messages too — resolve the locale up front
+    # (check() refines it with awesome.yml's `lang:` later).
     parser = OptionParser.new do |p|
-      p.banner = <<-BANNER
-        awesome — is your Crystal code awesome or awful?
+      p.banner = Awesome::I18n.t("cli.banner")
 
-        Usage:
-
-          awesome [paths]            Check paths with all guards (default: current dir, awesome.yml aware)
-          awesome speed [paths]      Check paths with speed guards only
-          awesome memory [paths]     Check paths with memory guards only
-          awesome code [paths]       Check paths with code guards only
-          awesome doc [GUARD]        Show documentation for one or all guards
-          awesome guards             List registered guards (total, by level and kind)
-
-        Options:
-      BANNER
-
-      p.on("--config PATH", "Path to awesome.yml (default: ./awesome.yml or ./.awesome.yml)") { |v| config_path = v }
-      p.on("--level NAME", "Check up to this level: #{Awesome::Guard::LEVELS.join(", ")} (default: #{Awesome::Guard::DEFAULT_LEVEL})") { |v| level = v }
-      p.on("--only A,B", "Run only these guards") { |v| only = split_list(v) }
-      p.on("--except A,B", "Run all but these guards") { |v| except = split_list(v) }
+      p.on("--config PATH", Awesome::I18n.t("cli.opt.config")) { |v| config_path = v }
+      p.on("--level NAME", Awesome::I18n.t("cli.opt.level", levels: Awesome::Guard::LEVELS.join(", "), default: Awesome::Guard::DEFAULT_LEVEL)) { |v| level = v }
+      p.on("--only A,B", Awesome::I18n.t("cli.opt.only")) { |v| only = split_list(v) }
+      p.on("--except A,B", Awesome::I18n.t("cli.opt.except")) { |v| except = split_list(v) }
+      p.on("--lang LOCALE", Awesome::I18n.t("cli.opt.lang", languages: Awesome::I18n::LOCALES.join(", "), default: Awesome::I18n::DEFAULT_LOCALE)) { |v| lang = v }
       p.on("-v", "--version", "Show version") do
         STDOUT << "awesome " << Awesome::VERSION << '\n'
         finished = true
@@ -52,15 +47,19 @@ module Awesome::CLI
         puts p
         finished = true
       end
-      p.invalid_option { |opt| code = usage_error("unknown option: #{opt}", p); finished = true }
-      p.missing_option { |opt| code = usage_error("missing value for #{opt}", p); finished = true }
+      p.invalid_option { |opt| code = usage_error(Awesome::I18n.t("cli.errors.unknown_option", option: opt), p); finished = true }
+      p.missing_option { |opt| code = usage_error(Awesome::I18n.t("cli.errors.missing_value", option: opt), p); finished = true }
     end
     parser.parse(argv)
     return code if finished
     if level && !Awesome::Guard::LEVELS.includes?(level)
-      return usage_error("unknown level: #{level} (available: #{Awesome::Guard::LEVELS.join(", ")})", parser)
+      return usage_error(Awesome::I18n.t("cli.errors.unknown_level", level: level, available: Awesome::Guard::LEVELS.join(", ")), parser)
+    end
+    if lang && !Awesome::I18n::LOCALES.includes?(lang)
+      return usage_error(Awesome::I18n.t("cli.errors.unknown_lang", lang: lang, available: Awesome::I18n::LOCALES.join(", ")), parser)
     end
 
+    Awesome::I18n.locale = Awesome::I18n.resolve(lang)
     paths = argv
 
     case command
@@ -75,17 +74,24 @@ module Awesome::CLI
     # CLI beats awesome.yml beats the built-in default.
     level = cli_level || config.level || Awesome::Guard::DEFAULT_LEVEL
     unless Awesome::Guard::LEVELS.includes?(level)
-      STDERR << "awesome: unknown level in awesome.yml: " << level \
-        << " (available: " << Awesome::Guard::LEVELS.join(", ") << ")\n"
+      STDERR << "awesome: " << Awesome::I18n.t("cli.errors.unknown_level_config",
+        level: level, available: Awesome::Guard::LEVELS.join(", ")) << '\n'
       return 2
     end
+    # Same priority for the language; absent everywhere — take LANG's hint.
+    if config.lang && !Awesome::I18n::LOCALES.includes?(config.lang)
+      STDERR << "awesome: " << Awesome::I18n.t("cli.errors.unknown_lang_config",
+        lang: config.lang, available: Awesome::I18n::LOCALES.join(", ")) << '\n'
+      return 2
+    end
+    Awesome::I18n.locale = (config.lang || Awesome::I18n.locale)
     # Any command other than "check" is a kind filter (speed/memory/code).
     kind = command == "check" ? nil : command
     report = Runner.new(config, only, except, kind, level).run(paths)
     print_report(report)
     report.awesome? ? 0 : 1
   rescue ex : YAML::ParseException
-    STDERR << "awesome: config parse error: " << ex.message << '\n'
+    STDERR << "awesome: " << Awesome::I18n.t("cli.errors.config_parse", message: ex.message) << '\n'
     2
   end
 
@@ -94,17 +100,17 @@ module Awesome::CLI
     unless names.empty?
       guards = guards.select { |g| names.includes?(g.name) }
       if guards.empty?
-        STDERR << "awesome: no such guard: " << names.join(", ") << '\n'
-        STDERR << "Available: " << Awesome::Guard.all.map(&.name).join(", ") << '\n'
+        STDERR << "awesome: " << Awesome::I18n.t("cli.errors.no_such_guard", names: names.join(", ")) << '\n'
+        STDERR << Awesome::I18n.t("cli.errors.available", guards: Awesome::Guard.all.map(&.name).join(", ")) << '\n'
         return 2
       end
     end
     guards.each do |g|
       puts "#{g.name} (#{g.kind}, #{g.level}, #{g.severity})".colorize.bold
       puts wrap(g.short_description, indent: "  ")
-      puts "  Good example:"
+      STDOUT << "  " << Awesome::I18n.t("doc.good_example") << '\n'
       puts indent(g.good_example, "    ")
-      puts "  Bad example:"
+      STDOUT << "  " << Awesome::I18n.t("doc.bad_example") << '\n'
       puts indent(g.bad_example, "    ")
       puts
     end
@@ -119,8 +125,9 @@ module Awesome::CLI
 
   def self.guards_reference : Int32
     all = Awesome::Guard.all
-    STDOUT << "awesome " << Awesome::VERSION << " — " << all.size << ' ' \
-      << "guard".pluralize(all.size) << " registered" << '\n' << '\n'
+    header = Awesome::I18n.t("cli.guards.registered",
+      version: Awesome::VERSION, count: all.size)
+    STDOUT << header << '\n' << '\n'
     Awesome::Guard::LEVELS.each do |level|
       level_guards = all.select(&.level.==(level))
       next if level_guards.empty?
@@ -150,17 +157,32 @@ module Awesome::CLI
       puts if issue.excerpt
     end
     count = report.issues.size
-    STDOUT << report.inspected << " inspected, " << count << ' ' \
-      << "issue".pluralize(count) << ".\n"
+    summary = Awesome::I18n.t("report.summary",
+      inspected: Awesome::I18n.t("report.inspected", count: report.inspected),
+      issues: Awesome::I18n.t("report.issues", count: count))
+    STDOUT << summary << ".\n"
     if report.awesome?
-      puts "Your code is awesome.".colorize.light_green.bold
+      puts Awesome::I18n.t("report.awesome").colorize.light_green.bold
     else
-      puts "Your code is awful: #{report.issues.size} #{"issue".pluralize(report.issues.size)}.".colorize.light_red.bold
+      puts Awesome::I18n.t("report.awful",
+        issues: Awesome::I18n.t("report.issues", count: report.issues.size)).colorize.light_red.bold
     end
   end
 
   private def self.split_list(value : String) : Array(String)
     value.split(',').map(&.strip).reject(&.empty?)
+  end
+
+  # `--lang VALUE` / `--lang=VALUE` before any parsing, see run().
+  private def self.pre_scan_lang(argv : Array(String)) : String?
+    argv.each_with_index do |arg, i|
+      if arg == "--lang"
+        return argv[i + 1]?
+      elsif arg.starts_with?("--lang=")
+        return arg.split('=', 2)[1]?
+      end
+    end
+    nil
   end
 
   # Severity → report color: bugs light red, warnings light yellow
@@ -204,11 +226,5 @@ module Awesome::CLI
 
   private def self.indent(text : String, prefix : String) : String
     text.split('\n').map { |l| "#{prefix}#{l}" }.join('\n')
-  end
-end
-
-class String
-  def pluralize(count : Int32)
-    count == 1 ? self : "#{self}s"
   end
 end

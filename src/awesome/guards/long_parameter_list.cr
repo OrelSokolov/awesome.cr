@@ -50,9 +50,8 @@ class Awesome::Guards::LongParameterList < Awesome::Guard
       Awesome::Issue.new(
         source.path,
         "LongParameterList",
-        "#{fact.label} takes #{fact.params} #{"parameter".pluralize(fact.params)} " \
-        "(threshold: #{max_params}) — bundle them into one concept " \
-        "or split the method",
+        Awesome::I18n.t("guards.LongParameterList.main",
+          label: fact.label, count: fact.params, threshold: max_params),
         fact.location,
         source.excerpt_at(fact.location.try(&.line_number) || 0)
       )

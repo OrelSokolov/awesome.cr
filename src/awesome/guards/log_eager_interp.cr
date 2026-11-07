@@ -46,9 +46,8 @@ class Awesome::Guards::LogEagerInterp < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "LogEagerInterp",
-          "#{receiver}.#{node.name} \"…\" builds the String even when the level is " \
-          "disabled; the block form #{receiver}.#{node.name} { \"…\" } interpolates " \
-          "only on emit",
+          Awesome::I18n.t("guards.LogEagerInterp.main",
+            receiver: receiver, level: node.name),
           node.location,
           @source.excerpt_at(node.location.try(&.line_number) || 0)
         )

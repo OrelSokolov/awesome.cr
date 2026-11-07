@@ -113,6 +113,29 @@ guards:
     check_extern: false
 ```
 
+## Languages
+
+Messages ship in **English and Russian**, embedded into the binary at
+compile time (`locales/en.yml`, `locales/ru.yml` are read by a
+compile-time macro — no locale files are opened at runtime).
+
+The language is resolved in this order:
+
+1. `--lang ru` on the command line
+2. `lang: ru` in `awesome.yml`
+3. `$LC_ALL` / `$LANG` (`ru*` → Russian)
+4. English (default)
+
+```console
+$ awesome --lang ru src/
+$ awesome --lang ru doc StructurePacking
+```
+
+Adding a language means dropping a new `locales/<lang>.yml` next to the
+existing ones and listing the code in `src/awesome/i18n.cr` — the
+catalog keys (including every guard message) must mirror `en.yml`; a
+spec enforces the parity.
+
 ## Guards
 
 | Guard | Kind | Level | Checks | Docs |
@@ -196,6 +219,13 @@ end
 
 Awesome::Guard.registered << Awesome::Guards::MyGuard
 ```
+
+Issue messages go through the i18n catalog (see [Languages](#languages)):
+build them as `Awesome::I18n.t("guards.MyGuard.main", x: …)` and add the
+key with the English original and a Russian translation to
+`locales/*.yml`. `%{name}` placeholders take the values as named
+arguments; a `count:` argument picks plural forms
+(`.one`/`.other` for English, `.one`/`.few`/`.many` for Russian).
 
 See [ROADMAP.md](ROADMAP.md) for what's next (search modes, more guards).
 

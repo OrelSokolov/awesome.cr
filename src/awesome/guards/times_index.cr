@@ -50,8 +50,7 @@ class Awesome::Guards::TimesIndex < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "TimesIndex",
-          "#{recv}.size.times { |#{index.name}| … } re-derives elements through " \
-          "a bounds-checked index; #{recv}.each { |x| } yields them directly",
+          Awesome::I18n.t("guards.TimesIndex.main", recv: recv, index: index.name),
           node.location,
           @source.excerpt_at(node.location.try(&.line_number) || 0)
         )

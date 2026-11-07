@@ -27,8 +27,9 @@
 # actually wraps which write, and a `Signal.trap(Signal::PIPE)` guards
 # the whole process anyway.
 class Awesome::Guards::CliStdoutEpipe < Awesome::Guard
-  KIND     = "code"
-  SEVERITY = "bug" # the process dies with an unhandled exception
+  KIND              = "code"
+  LEVEL             = "psycho" # opt-in: matters for shipped binaries, noise on scripts
+  SEVERITY          = "style"  # the exit is ugly, the logic is intact — a UX wart, not a bug
   SHORT_DESCRIPTION = <<-TEXT
     Checks that a CLI survives its stdout reader leaving — `foo | head`
     must not die with `IO::Error: Broken pipe` mid-output. Fires on a
@@ -113,9 +114,7 @@ class Awesome::Guards::CliStdoutEpipe < Awesome::Guard
     [Awesome::Issue.new(
       source.path,
       "CliStdoutEpipe",
-      "#{what} — piping into head/less kills the process with " \
-      "`IO::Error: Broken pipe` mid-output; rescue `IO::Error` at the entry point " \
-      "and exit 0 when the os_error is EPIPE",
+      Awesome::I18n.t("guards.CliStdoutEpipe.main", what: what),
       location,
       source.excerpt_at(location.try(&.line_number) || 0)
     )]
@@ -162,13 +161,13 @@ class Awesome::Guards::CliStdoutEpipe < Awesome::Guard
     @depth = 0
 
     def visit(node : Crystal::Def | Crystal::Block | Crystal::ProcLiteral |
-                   Crystal::ClassDef | Crystal::ModuleDef | Crystal::LibDef | Crystal::Macro)
+                     Crystal::ClassDef | Crystal::ModuleDef | Crystal::LibDef | Crystal::Macro)
       @depth += 1
       true
     end
 
     def end_visit(node : Crystal::Def | Crystal::Block | Crystal::ProcLiteral |
-                        Crystal::ClassDef | Crystal::ModuleDef | Crystal::LibDef | Crystal::Macro)
+                         Crystal::ClassDef | Crystal::ModuleDef | Crystal::LibDef | Crystal::Macro)
       @depth -= 1
     end
 

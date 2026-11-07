@@ -177,8 +177,7 @@ class Awesome::Guards::SelfSizeIndex < Awesome::Guard
       Awesome::Issue.new(
         @source.path,
         "SelfSizeIndex",
-        "indexing by the collection's own size: `#{what}`#{origin} is one " \
-        "past the end — the last valid index is `size - 1`",
+        Awesome::I18n.t("guards.SelfSizeIndex.main", what: what, origin: origin),
         node.location,
         @source.excerpt_at(node.location.try(&.line_number) || 0)
       )

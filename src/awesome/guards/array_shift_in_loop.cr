@@ -87,8 +87,7 @@ class Awesome::Guards::ArrayShiftInLoop < Awesome::Guard
       @issues << Awesome::Issue.new(
         @source.path,
         "ArrayShiftInLoop",
-        "##{node.name} inside a loop is O(n) per call on an Array " \
-        "(O(n²) for the loop); use a Deque for queue access",
+        Awesome::I18n.t("guards.ArrayShiftInLoop.main", name: node.name),
         node.location,
         @source.excerpt_at(node.location.try(&.line_number) || 0)
       )

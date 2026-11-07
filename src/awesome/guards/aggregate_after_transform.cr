@@ -66,8 +66,7 @@ class Awesome::Guards::AggregateAfterTransform < Awesome::Guard
       @issues << Awesome::Issue.new(
         @source.path,
         "AggregateAfterTransform",
-        "map { … }.#{node.name} allocates an intermediate Array just to " \
-        "aggregate it away; #{fix}",
+        Awesome::I18n.t("guards.AggregateAfterTransform.main", name: node.name, fix: fix),
         node.location,
         @source.excerpt_at(node.location.try(&.line_number) || 0)
       )

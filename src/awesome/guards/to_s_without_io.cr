@@ -62,9 +62,7 @@ class Awesome::Guards::ToSWithoutIo < Awesome::Guard
       Awesome::Issue.new(
         d.source.path,
         "ToSWithoutIo",
-        "def to_s without an IO argument never runs where it matters: io <<, " \
-        "interpolation and puts all call to_s(io : IO) — define " \
-        "`def to_s(io : IO)` and write into the io instead",
+        Awesome::I18n.t("guards.ToSWithoutIo.main"),
         d.location,
         d.source.excerpt_at(d.line)
       )

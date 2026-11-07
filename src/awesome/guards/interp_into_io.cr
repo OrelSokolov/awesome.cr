@@ -90,8 +90,7 @@ class Awesome::Guards::InterpIntoIo < Awesome::Guard
       @issues << Awesome::Issue.new(
         @source.path,
         "InterpIntoIo",
-        "Interpolation inside #{node.name} allocates the whole String first " \
-        "(String.interpolation); append the parts instead — io << \"a=\" << a",
+        Awesome::I18n.t("guards.InterpIntoIo.main", call: node.name),
         node.location,
         @source.excerpt_at(node.location.try(&.line_number) || 0)
       )

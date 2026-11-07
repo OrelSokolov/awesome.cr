@@ -64,6 +64,7 @@ end
 #   exclude:
 #     - lib/**
 #   level: senior            # vibecoder < senior (default) < psycho
+#   lang: ru                 # message language: en (default), ru
 #   guards:
 #     StructurePacking:
 #       enabled: true
@@ -76,9 +77,10 @@ class Awesome::Config
   getter excludes : Array(String)
   getter guards : Hash(String, YAML::Any)
   getter level : String?
+  getter lang : String?
 
   def initialize(@includes = DEFAULT_INCLUDE, @excludes = DEFAULT_EXCLUDE,
-                 @guards = {} of String => YAML::Any, @level = nil)
+                 @guards = {} of String => YAML::Any, @level = nil, @lang = nil)
   end
 
   def self.locate(dir : String = Dir.current) : String?
@@ -107,7 +109,8 @@ class Awesome::Config
       raw.each { |name, v| guards[name.to_s] = v }
     end
     level = doc["level"]?.try(&.to_s.presence)
-    new(includes, excludes, guards, level)
+    lang = doc["lang"]?.try(&.to_s.presence)
+    new(includes, excludes, guards, level, lang)
   end
 
   def guard(name : String) : GuardConfig

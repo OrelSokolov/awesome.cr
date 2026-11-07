@@ -116,10 +116,8 @@ class Awesome::Guards::DoubleFree < Awesome::Guard
             @issues << Awesome::Issue.new(
               @source.path,
               "DoubleFree",
-              "`#{call.obj}.#{call.name}(#{name})` frees `#{name}` again: " \
-              "it was already freed at line #{prev_line} and nothing " \
-              "reassigned `#{name}` in between — a double free corrupts " \
-              "the C heap",
+              Awesome::I18n.t("guards.DoubleFree.main",
+                lib: call.obj, fun: call.name, var: name, line: prev_line),
               call.location,
               @source.excerpt_at(call.location.try(&.line_number) || 0)
             )

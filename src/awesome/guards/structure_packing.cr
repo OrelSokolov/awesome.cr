@@ -114,8 +114,7 @@ class Awesome::Guards::StructurePacking < Awesome::Guard
       @issues << Awesome::Issue.new(
         @source.path,
         "StructurePacking",
-        "Reorder struct fields by decreasing alignment " \
-        "(largest first): sizeof can shrink from #{current} to #{optimal} bytes",
+        Awesome::I18n.t("guards.StructurePacking.main", current: current, optimal: optimal),
         node.location,
         @source.excerpt_at(node.location.try(&.line_number) || 0)
       )

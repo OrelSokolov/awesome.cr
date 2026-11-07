@@ -93,8 +93,8 @@ class Awesome::Guards::BoolBitmask < Awesome::Guard
       @issues << Awesome::Issue.new(
         @source.path,
         "BoolBitmask",
-        "#{bools.size} Bool fields cost #{bools.size} bytes; a @[Flags] enum " \
-        "packs them into 1 (e.g. #{bools.first.capitalize} | #{bools.last.capitalize})",
+        Awesome::I18n.t("guards.BoolBitmask.main",
+          count: bools.size, first: bools.first.capitalize, last: bools.last.capitalize),
         node.location,
         @source.excerpt_at(node.location.try(&.line_number) || 0)
       )

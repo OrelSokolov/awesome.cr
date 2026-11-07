@@ -90,8 +90,7 @@ class Awesome::Guards::StringConcatInLoop < Awesome::Guard
       @issues << Awesome::Issue.new(
         @source.path,
         "StringConcatInLoop",
-        "String concatenation inside a loop reallocates on every iteration; " \
-        "append into an IO::Memory (or String::Builder) and build the String once",
+        Awesome::I18n.t("guards.StringConcatInLoop.main"),
         node.location,
         @source.excerpt_at(node.location.try(&.line_number) || 0)
       )

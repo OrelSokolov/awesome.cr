@@ -209,9 +209,10 @@ class Awesome::Guards::IndexLookahead < Awesome::Guard
       Awesome::Issue.new(
         @source.path,
         "IndexLookahead",
-        "`#{recv}[#{index} + #{offset}]` runs past the end: the loop's last " \
-        "`#{index}` is `#{recv}.size - 1`, so the access hits index " \
-        "`#{recv}.size` — guard the last iteration or loop to `#{recv}.size - #{offset}`",
+        Awesome::I18n.t("guards.IndexLookahead.main",
+          recv: recv,
+          index: index,
+          offset: offset),
         node.location,
         @source.excerpt_at(node.location.try(&.line_number) || 0)
       ).tap { |issue| @issues << issue }

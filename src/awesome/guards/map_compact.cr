@@ -42,8 +42,7 @@ class Awesome::Guards::MapCompact < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "MapCompact",
-          "map { … }.compact walks the intermediate Array a second time; " \
-          "compact_map keeps the non-nil results in one pass",
+          Awesome::I18n.t("guards.MapCompact.main"),
           node.location,
           @source.excerpt_at(node.location.try(&.line_number) || 0)
         )

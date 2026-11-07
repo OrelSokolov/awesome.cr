@@ -56,9 +56,8 @@ class Awesome::Guards::SingleCharStringArg < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "SingleCharStringArg",
-          "#{node.name} with single-character String literals compares whole " \
-          "Strings; the Char overload #{node.name}(#{char_args}) compares " \
-          "character codes directly",
+          Awesome::I18n.t("guards.SingleCharStringArg.main",
+            name: node.name, char_args: char_args),
           node.location,
           @source.excerpt_at(node.location.try(&.line_number) || 0)
         )

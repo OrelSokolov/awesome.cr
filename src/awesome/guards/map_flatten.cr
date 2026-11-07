@@ -43,8 +43,7 @@ class Awesome::Guards::MapFlatten < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "MapFlatten",
-          "map { … }.flatten allocates an intermediate Array; flat_map builds " \
-          "the result in one pass",
+          Awesome::I18n.t("guards.MapFlatten.main"),
           node.location,
           @source.excerpt_at(node.location.try(&.line_number) || 0)
         )

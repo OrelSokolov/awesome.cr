@@ -70,9 +70,8 @@ class Awesome::Guards::UtilityClass < Awesome::Guard
       Awesome::Issue.new(
         fact.source.path,
         "UtilityClass",
-        "#{fact.display}: all #{fact.class_methods} #{"method".pluralize(fact.class_methods)} " \
-        "are class methods and nothing is instantiated — a namespace, not a type; " \
-        "make it a module (call sites like #{fact.display}.method stay valid)",
+        Awesome::I18n.t("guards.UtilityClass.main",
+          display: fact.display, count: fact.class_methods),
         fact.location,
         fact.source.excerpt_at(fact.line)
       )

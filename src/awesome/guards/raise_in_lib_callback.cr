@@ -16,9 +16,9 @@
 # because it still unwinds through C. A proc stored in a variable and
 # passed later is not tracked (a false negative by design).
 class Awesome::Guards::RaiseInLibCallback < Awesome::Guard
-  KIND     = "memory"
-  LEVEL    = "vibecoder" # undefined behaviour, not a style nit
-  SEVERITY = "bug"       # runtime-breaker: the exception crosses C frames
+  KIND              = "memory"
+  LEVEL             = "vibecoder" # undefined behaviour, not a style nit
+  SEVERITY          = "bug"       # runtime-breaker: the exception crosses C frames
   SHORT_DESCRIPTION = <<-TEXT
     Checks that procs passed to lib-shim funs never raise. A `raise`
     inside a callback called from C unwinds through the library's C
@@ -93,11 +93,7 @@ class Awesome::Guards::RaiseInLibCallback < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "RaiseInLibCallback",
-          "`raise` inside the callback passed to `#{call}`: an exception " \
-          "raised in Crystal code called from C unwinds through the " \
-          "library's C frames — undefined behaviour, in practice an " \
-          "abort. Signal the error via the callback's return value or " \
-          "catch it inside the callback",
+          Awesome::I18n.t("guards.RaiseInLibCallback.main", call: call),
           raise_node.location,
           @source.excerpt_at(raise_node.location.try(&.line_number) || 0)
         )

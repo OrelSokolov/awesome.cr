@@ -58,9 +58,8 @@ class Awesome::Guards::SelfSortReassign < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "SelfSortReassign",
-          "Reassigning '#{node.target}' to its own ##{call.name} result pays for " \
-          "a copy nobody needs; use ##{call.name}! in place — safe as long as " \
-          "nothing else references '#{node.target}'",
+          Awesome::I18n.t("guards.SelfSortReassign.main",
+            target: node.target, name: call.name),
           node.location,
           @source.excerpt_at(node.location.try(&.line_number) || 0)
         )

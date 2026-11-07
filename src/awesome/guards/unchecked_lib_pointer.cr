@@ -285,10 +285,8 @@ class Awesome::Guards::UncheckedLibPointer < Awesome::Guard
           @issues << Awesome::Issue.new(
             @source.path,
             "UncheckedLibPointer",
-            "`#{obj}.value` dereferences the pointer returned by " \
-            "`#{receiver}.#{obj.name}` on the spot: a C fun returning " \
-            "`T*` can return NULL — capture it and check first " \
-            "(`if ptr = #{receiver}.#{obj.name}(...)`)",
+            Awesome::I18n.t("guards.UncheckedLibPointer.main",
+              call: obj, lib: receiver, fun: obj.name),
             node.location,
             @source.excerpt_at(node.location.try(&.line_number) || 0)
           )
@@ -322,10 +320,8 @@ class Awesome::Guards::UncheckedLibPointer < Awesome::Guard
           @issues << Awesome::Issue.new(
             @source.path,
             "UncheckedLibPointer",
-            "`#{obj}.value` dereferences the pointer `#{obj}` got from " \
-            "`#{assign}` at line #{assign_line} without a null check in " \
-            "between: a C fun returning `T*` can return NULL — " \
-            "`if #{obj}` / `#{obj}.nil?` first",
+            Awesome::I18n.t("guards.UncheckedLibPointer.stored",
+              var: obj, assign: assign, line: assign_line),
             node.location,
             @source.excerpt_at(node.location.try(&.line_number) || 0)
           )

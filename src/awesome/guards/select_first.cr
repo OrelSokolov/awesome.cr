@@ -44,8 +44,7 @@ class Awesome::Guards::SelectFirst < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "SelectFirst",
-          "select { … }.#{node.name} allocates the whole filtered Array for one " \
-          "element; #{replacement} returns the first match without it",
+          Awesome::I18n.t("guards.SelectFirst.main", name: node.name, replacement: replacement),
           node.location,
           @source.excerpt_at(node.location.try(&.line_number) || 0)
         )

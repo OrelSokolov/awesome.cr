@@ -26,9 +26,9 @@
 # fun either way. `fun x = ...` declarations inside a `lib` have no
 # body and never fire.
 class Awesome::Guards::RaiseInFunDef < Awesome::Guard
-  KIND     = "memory"
-  LEVEL    = "vibecoder" # undefined behaviour, not a style nit
-  SEVERITY = "bug"       # runtime-breaker: the exception crosses C frames
+  KIND              = "memory"
+  LEVEL             = "vibecoder" # undefined behaviour, not a style nit
+  SEVERITY          = "bug"       # runtime-breaker: the exception crosses C frames
   SHORT_DESCRIPTION = <<-TEXT
     Checks that `fun` defs never let an exception escape. A `fun` is
     an ABI entry point called from C; a `raise` inside it unwinds
@@ -63,8 +63,8 @@ class Awesome::Guards::RaiseInFunDef < Awesome::Guard
     getter issues = [] of Awesome::Issue
 
     def initialize(@source : Awesome::Source)
-      @in_fun = false       # inside a `fun` def body
-      @in_handler = false   # inside a begin/rescue of that body
+      @in_fun = false     # inside a `fun` def body
+      @in_handler = false # inside a begin/rescue of that body
     end
 
     def visit(node : Crystal::FunDef)
@@ -98,10 +98,7 @@ class Awesome::Guards::RaiseInFunDef < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "RaiseInFunDef",
-          "`#{node.name}` inside a `fun` def: an exception escaping an " \
-          "ABI entry point unwinds through the C caller's frames — " \
-          "undefined behaviour, in practice an abort far from the bug. " \
-          "Catch inside the fun and return an error code",
+          Awesome::I18n.t("guards.RaiseInFunDef.main", name: node.name),
           node.location,
           @source.excerpt_at(node.location.try(&.line_number) || 0)
         )

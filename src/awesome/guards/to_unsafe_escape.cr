@@ -27,9 +27,9 @@
 # intended use and never fire; wrapping shapes (`x.to_unsafe.as(Int8*)`,
 # pointer arithmetic) are a false negative by design.
 class Awesome::Guards::ToUnsafeEscape < Awesome::Guard
-  KIND     = "memory"
-  LEVEL    = "vibecoder" # a delayed dangling pointer, not a style nit
-  SEVERITY = "bug"       # runtime-breaker: the GC frees the backing bytes
+  KIND              = "memory"
+  LEVEL             = "vibecoder" # a delayed dangling pointer, not a style nit
+  SEVERITY          = "bug"       # runtime-breaker: the GC frees the backing bytes
   SHORT_DESCRIPTION = <<-TEXT
     Checks that `to_unsafe` pointers don't outlive their call. Storing
     `x.to_unsafe` in an ivar/class var/constant or returning it
@@ -109,11 +109,7 @@ class Awesome::Guards::ToUnsafeEscape < Awesome::Guard
                                       Crystal::Path) &&
          (value = node.value) && (call = to_unsafe_call(value)) && !kept?(call)
         report(value,
-          "`#{target} = ... .to_unsafe` keeps the raw pointer but not the " \
-          "object it points into: the GC does not scan C memory, so the " \
-          "backing object is collectable and the pointer dangles. Keep " \
-          "the owner alive next to the pointer, or copy the bytes into " \
-          "C-owned memory")
+          Awesome::I18n.t("guards.ToUnsafeEscape.main", target: target))
       end
       true
     end
@@ -121,10 +117,7 @@ class Awesome::Guards::ToUnsafeEscape < Awesome::Guard
     def visit(node : Crystal::Return)
       if (exp = node.exp) && (call = to_unsafe_call(exp)) && !kept?(call)
         report(exp,
-          "`return ... .to_unsafe` hands out a raw pointer into the GC " \
-          "heap: once the owner is unreachable, the collector can free " \
-          "the bytes and the caller's pointer dangles. Return the " \
-          "String/Slice itself, or copy the bytes into C-owned memory")
+          Awesome::I18n.t("guards.ToUnsafeEscape.return"))
       end
       true
     end

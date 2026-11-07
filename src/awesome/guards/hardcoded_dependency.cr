@@ -108,10 +108,10 @@ class Awesome::Guards::HardcodedDependency < Awesome::Guard
       issues << Awesome::Issue.new(
         hit.source.path,
         "HardcodedDependency",
-        "#{hit.owner.name} constructs #{hit.path}.new itself (#{hit.where}) — " \
-        "but it works with #{abstraction.last_segment}, which has " \
-        "#{impls.size} implementations (#{names}); pass the dependency " \
-        "in instead, the welded-in line bypasses the seam",
+        Awesome::I18n.t("guards.HardcodedDependency.main",
+          owner: hit.owner.name, path: hit.path, where: hit.where,
+          abstraction: abstraction.last_segment, impls_count: impls.size,
+          impls: names),
         hit.location,
         hit.source.excerpt_at(hit.location.try(&.line_number) || 0)
       )

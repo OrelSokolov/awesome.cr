@@ -24,9 +24,9 @@
 #   * a `finalize` or `close` def anywhere in the file says the
 #     project already manages the lifetime explicitly.
 class Awesome::Guards::StoredLibPointer < Awesome::Guard
-  KIND     = "memory"
-  LEVEL    = "senior"    # on by default: attention marker, not a bug
-  SEVERITY = "style"     # suspicion — the contract may well be safe
+  KIND              = "memory"
+  LEVEL             = "senior" # on by default: attention marker, not a bug
+  SEVERITY          = "style"  # suspicion — the contract may well be safe
   SHORT_DESCRIPTION = <<-TEXT
     Checks that raw pointers from lib funs are not silently stored in
     ivars/class vars/constants. Whether C keeps ownership (a borrow
@@ -95,7 +95,7 @@ class Awesome::Guards::StoredLibPointer < Awesome::Guard
   private class Visitor < Crystal::Visitor
     getter issues = [] of Awesome::Issue
 
-    @libs = Set(String).new        # libs declared in this file
+    @libs = Set(String).new # libs declared in this file
     @lib_stack = [] of String
     @manages_lifecycle = false
 
@@ -128,12 +128,8 @@ class Awesome::Guards::StoredLibPointer < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "StoredLibPointer",
-          "`#{target} = #{value}` stores a raw pointer from `#{obj}` " \
-          "in a field: whether C keeps ownership (the borrow can " \
-          "dangle when it frees/reallocs) or transfers it (it leaks " \
-          "when nothing frees it) is a contract the field doesn't " \
-          "express. Wrap it with an explicit `#close`/`#finalize`, " \
-          "or hide it behind a handle into a Crystal-side table",
+          Awesome::I18n.t("guards.StoredLibPointer.main",
+            target: target, value: value, lib: obj),
           value.location,
           @source.excerpt_at(value.location.try(&.line_number) || 0)
         )

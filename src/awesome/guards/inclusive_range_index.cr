@@ -51,9 +51,7 @@ class Awesome::Guards::InclusiveRangeIndex < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "InclusiveRangeIndex",
-          "the loop's last `#{index.name}` is `#{recv}.size`, where " \
-          "`#{recv}[#{index.name}]` raises IndexError — use the exclusive " \
-          "range `0...#{recv}.size` or `#{recv}.size.times`",
+          Awesome::I18n.t("guards.InclusiveRangeIndex.main", index: index.name, recv: recv),
           node.location,
           @source.excerpt_at(node.location.try(&.line_number) || 0)
         )

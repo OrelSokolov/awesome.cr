@@ -54,9 +54,9 @@ class Awesome::Guards::SingleSubclass < Awesome::Guard
       issues << Awesome::Issue.new(
         entry.path,
         "SingleSubclass",
-        "#{entry.qualified_name} is #{parent.qualified_name}'s only subclass — " \
-        "an only child buys indirection, not polymorphism; compose " \
-        "(have a #{parent.last_segment}) or merge the two",
+        Awesome::I18n.t("guards.SingleSubclass.main",
+          subclass: entry.qualified_name, parent: parent.qualified_name,
+          parent_segment: parent.last_segment),
         entry.location,
         by_path[entry.path]?.try(&.excerpt_at(entry.line))
       )

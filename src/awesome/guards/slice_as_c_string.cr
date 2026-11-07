@@ -24,9 +24,9 @@
 # Shims bound elsewhere (Lib-prefixed without a declaration) have an
 # unknown signature — a false negative by design.
 class Awesome::Guards::SliceAsCString < Awesome::Guard
-  KIND     = "memory"
-  LEVEL    = "senior"    # on by default: attention marker, not a bug
-  SEVERITY = "style"     # suspicion — String receivers are fine here
+  KIND              = "memory"
+  LEVEL             = "senior" # on by default: attention marker, not a bug
+  SEVERITY          = "style"  # suspicion — String receivers are fine here
   SHORT_DESCRIPTION = <<-TEXT
     Checks that `x.to_unsafe` passed to a `UInt8*`/`Int8*`/`Char*`
     parameter of a lib fun travels with a length argument. A String's
@@ -113,13 +113,8 @@ class Awesome::Guards::SliceAsCString < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "SliceAsCString",
-          "`#{arg}` is passed to `#{lib_name}.#{call.name}`'s `#{param}` " \
-          "(a C string parameter) with no length argument in the call: " \
-          "if the receiver is a Slice, its bytes are not NUL-terminated " \
-          "and C reading them as a string overreads the buffer " \
-          "(undefined behaviour). Pass `x.size` alongside, copy via " \
-          "`String.new(x)`, or bind the fun as " \
-          "`(data : UInt8*, len : Int32)`",
+          Awesome::I18n.t("guards.SliceAsCString.main",
+            expr: arg, lib: lib_name, fun: call.name, param: param),
           arg.location,
           @source.excerpt_at(arg.location.try(&.line_number) || 0)
         )

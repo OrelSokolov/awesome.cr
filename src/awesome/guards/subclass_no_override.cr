@@ -66,9 +66,9 @@ class Awesome::Guards::SubclassNoOverride < Awesome::Guard
       issues << Awesome::Issue.new(
         entry.path,
         "SubclassNoOverride",
-        "#{entry.qualified_name} overrides none of #{parent.qualified_name}'s " \
-        "methods — inheritance for code reuse, not polymorphism; have a " \
-        "#{parent.last_segment} instead of being one",
+        Awesome::I18n.t("guards.SubclassNoOverride.main",
+          subclass: entry.qualified_name, parent: parent.qualified_name,
+          parent_segment: parent.last_segment),
         entry.location,
         by_path[entry.path]?.try(&.excerpt_at(entry.line))
       )

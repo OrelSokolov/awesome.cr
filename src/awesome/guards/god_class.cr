@@ -67,10 +67,11 @@ class Awesome::Guards::GodClass < Awesome::Guard
       Awesome::Issue.new(
         fact.source.path,
         "GodClass",
-        "#{fact.display}: #{fact.methods} #{"method".pluralize(fact.methods)} and " \
-        "#{fact.ivars.size} #{"ivar".pluralize(fact.ivars.size)} — too much for one class " \
-        "(thresholds: #{max_methods} methods / #{max_ivars} ivars); " \
-        "split the responsibilities",
+        Awesome::I18n.t("guards.GodClass.main",
+          display: fact.display,
+          methods: Awesome::I18n.t("guards.GodClass.methods", count: fact.methods),
+          ivars: Awesome::I18n.t("guards.GodClass.ivars", count: fact.ivars.size),
+          methods_threshold: max_methods, ivars_threshold: max_ivars),
         fact.location,
         fact.source.excerpt_at(fact.line)
       )

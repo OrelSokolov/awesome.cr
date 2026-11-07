@@ -1,0 +1,102 @@
+# English message catalog — embedded into the binary at compile time
+# (see src/awesome/i18n.cr). Keys are flat and dotted:
+#   cli.*    — CLI output and errors
+#   doc.*    — `awesome doc` labels
+#   report.* — run summary
+#   source.* — per-file warnings
+#   guards.<GuardName>.<id> — issue messages, one key per message
+# Pluralized keys carry .one/.few/.many/.other subkeys and take `count`.
+"cli.banner": |-
+  awesome — is your Crystal code awesome or awful?
+
+  Usage:
+
+    awesome [paths]            Check paths with all guards (default: current dir, awesome.yml aware)
+    awesome speed [paths]      Check paths with speed guards only
+    awesome memory [paths]     Check paths with memory guards only
+    awesome code [paths]       Check paths with code guards only
+    awesome doc [GUARD]        Show documentation for one or all guards
+    awesome guards             List registered guards (total, by level and kind)
+
+  Options:
+"cli.opt.config": "Path to awesome.yml (default: ./awesome.yml or ./.awesome.yml)"
+"cli.opt.level": "Check up to this level: %{levels} (default: %{default})"
+"cli.opt.only": "Run only these guards"
+"cli.opt.except": "Run all but these guards"
+"cli.opt.lang": "Output language: %{languages} (default: from LANG, or %{default})"
+"cli.errors.unknown_option": "unknown option: %{option}"
+"cli.errors.missing_value": "missing value for %{option}"
+"cli.errors.unknown_level": "unknown level: %{level} (available: %{available})"
+"cli.errors.unknown_level_config": "unknown level in awesome.yml: %{level} (available: %{available})"
+"cli.errors.unknown_lang": "unknown language: %{lang} (available: %{available})"
+"cli.errors.unknown_lang_config": "unknown language in awesome.yml: %{lang} (available: %{available})"
+"cli.errors.no_such_guard": "no such guard: %{names}"
+"cli.errors.available": "Available: %{guards}"
+"cli.errors.config_parse": "config parse error: %{message}"
+"cli.guards.registered.one": "awesome %{version} — %{count} guard registered"
+"cli.guards.registered.other": "awesome %{version} — %{count} guards registered"
+"doc.good_example": "Good example:"
+"doc.bad_example": "Bad example:"
+"report.inspected.one": "%{count} inspected"
+"report.inspected.other": "%{count} inspected"
+"report.issues.one": "%{count} issue"
+"report.issues.other": "%{count} issues"
+"report.summary": "%{inspected}, %{issues}"
+"report.awesome": "Your code is awesome."
+"report.awful": "Your code is awful: %{issues}."
+"source.skipping": "skipping %{path}: %{message}"
+"guards.LongParameterList.main.one": "%{label} takes %{count} parameter (threshold: %{threshold}) — bundle them into one concept or split the method"
+"guards.LongParameterList.main.other": "%{label} takes %{count} parameters (threshold: %{threshold}) — bundle them into one concept or split the method"
+"guards.UtilityClass.main.one": "%{display}: all %{count} method are class methods and nothing is instantiated — a namespace, not a type; make it a module (call sites like %{display}.method stay valid)"
+"guards.UtilityClass.main.other": "%{display}: all %{count} methods are class methods and nothing is instantiated — a namespace, not a type; make it a module (call sites like %{display}.method stay valid)"
+"guards.GodClass.methods.one": "%{count} method"
+"guards.GodClass.methods.other": "%{count} methods"
+"guards.GodClass.ivars.one": "%{count} ivar"
+"guards.GodClass.ivars.other": "%{count} ivars"
+"guards.GodClass.main": "%{display}: %{methods} and %{ivars} — too much for one class (thresholds: %{methods_threshold} methods / %{ivars_threshold} ivars); split the responsibilities"
+"guards.DeepInheritance.main.one": "%{name} sits %{count} level deep in %{chain} — prefer composition (have a collaborator instead of being one)"
+"guards.DeepInheritance.main.other": "%{name} sits %{count} levels deep in %{chain} — prefer composition (have a collaborator instead of being one)"
+
+
+"guards.AggregateAfterTransform.main": "map { … }.%{name} allocates an intermediate Array just to aggregate it away; %{fix}"
+"guards.ArrayConcatInLoop.main": "Array += inside a loop copies the whole Array every iteration (O(n²) total); append in place with << instead"
+"guards.ArrayShiftInLoop.main": "#%{name} inside a loop is O(n) per call on an Array (O(n²) for the loop); use a Deque for queue access"
+"guards.BoolBitmask.main": "%{count} Bool fields cost %{count} bytes; a @[Flags] enum packs them into 1 (e.g. %{first} | %{last})"
+"guards.BoolFlagParameter.main": "%{method_possessive} %{param} is a flag argument — called with both true and false, two behaviours behind one name; two methods (like %{method} / %{method}!) say it without the branch"
+"guards.CliStdoutEpipe.main": "%{what} — piping into head/less kills the process with `IO::Error: Broken pipe` mid-output; rescue `IO::Error` at the entry point and exit 0 when the os_error is EPIPE"
+"guards.DoubleFree.main": "`%{lib}.%{fun}(%{var})` frees `%{var}` again: it was already freed at line %{line} and nothing reassigned `%{var}` in between — a double free corrupts the C heap"
+"guards.FileReadLines.main": "File.read_lines reads the whole file into memory before the first line is used; File.each_line streams with flat memory use"
+"guards.HardcodedDependency.main": "%{owner} constructs %{path}.new itself (%{where}) — but it works with %{abstraction}, which has %{impls_count} implementations (%{impls}); pass the dependency in instead, the welded-in line bypasses the seam"
+"guards.InclusiveRangeIndex.main": "the loop's last `%{index}` is `%{recv}.size`, where `%{recv}[%{index}]` raises IndexError — use the exclusive range `0...%{recv}.size` or `%{recv}.size.times`"
+"guards.IndexLookahead.main": "`%{recv}[%{index} + %{offset}]` runs past the end: the loop's last `%{index}` is `%{recv}.size - 1`, so the access hits index `%{recv}.size` — guard the last iteration or loop to `%{recv}.size - %{offset}`"
+"guards.InterpIntoIo.main": "Interpolation inside %{call} allocates the whole String first (String.interpolation); append the parts instead — io << \"a=\" << a"
+"guards.LogEagerInterp.main": "%{receiver}.%{level} \"…\" builds the String even when the level is disabled; the block form %{receiver}.%{level} { \"…\" } interpolates only on emit"
+"guards.MapCompact.main": "map { … }.compact walks the intermediate Array a second time; compact_map keeps the non-nil results in one pass"
+"guards.MapFlatten.main": "map { … }.flatten allocates an intermediate Array; flat_map builds the result in one pass"
+"guards.MemoryLeak.main": "`%{lib}.%{fun}` %{owner} allocates C heap memory, but `%{lib}.%{free}` is never called in the project: pair C allocations with a free (e.g. in `#finalize` or `#close`)"
+"guards.NilableStructField.main": "Field '%{field}' is a nilable union: %{size} bytes instead of %{payload} plus a branch on every access; prefer a sentinel value or a separate Bool flag"
+"guards.NotImplementedOverride.main": "%{subclass}#%{method} only raises NotImplementedError but %{parent}#%{method} is concrete — the subclass can't stand where the parent stood; keep the behaviour, don't inherit, or declare it abstract in the parent"
+"guards.PointerOfEscape.assign": "`%{target} = %{value}` pins the address but not its owner: the object holding the variable is GC-managed and the field keeps only the raw address — after a collection the pointer dangles. Keep the owner alive next to the field, or malloc the memory and own it explicitly"
+"guards.PointerOfEscape.main": "`%{expr}` passed to `%{lib}.%{fun}`: the address is stable but its owner is GC-managed and invisible to C — once the owner is collected, the library writes through a dangling pointer. Pass a value C copies, use a Box kept alive (see UnpinnedLibCallback), or malloc the memory and own it explicitly"
+"guards.RaiseInFunDef.main": "`%{name}` inside a `fun` def: an exception escaping an ABI entry point unwinds through the C caller's frames — undefined behaviour, in practice an abort far from the bug. Catch inside the fun and return an error code"
+"guards.RaiseInLibCallback.main": "`raise` inside the callback passed to `%{call}`: an exception raised in Crystal code called from C unwinds through the library's C frames — undefined behaviour, in practice an abort. Signal the error via the callback's return value or catch it inside the callback"
+"guards.SelectCompareZero.main": "select { … }.%{name}%{arg} builds the filtered Array just to compare with zero; %{replacement} answers without it"
+"guards.SelectFirst.main": "select { … }.%{name} allocates the whole filtered Array for one element; %{replacement} returns the first match without it"
+"guards.SelfSizeIndex.main": "indexing by the collection's own size: `%{what}`%{origin} is one past the end — the last valid index is `size - 1`"
+"guards.SelfSortReassign.main": "Reassigning '%{target}' to its own #%{name} result pays for a copy nobody needs; use #%{name}! in place — safe as long as nothing else references '%{target}'"
+"guards.SingleCharStringArg.main": "%{name} with single-character String literals compares whole Strings; the Char overload %{name}(%{char_args}) compares character codes directly"
+"guards.SingleSubclass.main": "%{subclass} is %{parent}'s only subclass — an only child buys indirection, not polymorphism; compose (have a %{parent_segment}) or merge the two"
+"guards.SliceAsCString.main": "`%{expr}` is passed to `%{lib}.%{fun}`'s `%{param}` (a C string parameter) with no length argument in the call: if the receiver is a Slice, its bytes are not NUL-terminated and C reading them as a string overreads the buffer (undefined behaviour). Pass `x.size` alongside, copy via `String.new(x)`, or bind the fun as `(data : UInt8*, len : Int32)`"
+"guards.StoredLibPointer.main": "`%{target} = %{value}` stores a raw pointer from `%{lib}` in a field: whether C keeps ownership (the borrow can dangle when it frees/reallocs) or transfers it (it leaks when nothing frees it) is a contract the field doesn't express. Wrap it with an explicit `#close`/`#finalize`, or hide it behind a handle into a Crystal-side table"
+"guards.StringConcatInLoop.main": "String concatenation inside a loop reallocates on every iteration; append into an IO::Memory (or String::Builder) and build the String once"
+"guards.StructurePacking.main": "Reorder struct fields by decreasing alignment (largest first): sizeof can shrink from %{current} to %{optimal} bytes"
+"guards.SubclassNoOverride.main": "%{subclass} overrides none of %{parent}'s methods — inheritance for code reuse, not polymorphism; have a %{parent_segment} instead of being one"
+"guards.TimesIndex.main": "%{recv}.size.times { |%{index}| … } re-derives elements through a bounds-checked index; %{recv}.each { |x| } yields them directly"
+"guards.ToSWithoutIo.main": "def to_s without an IO argument never runs where it matters: io <<, interpolation and puts all call to_s(io : IO) — define `def to_s(io : IO)` and write into the io instead"
+"guards.ToUnsafeEscape.main": "`%{target} = ... .to_unsafe` keeps the raw pointer but not the object it points into: the GC does not scan C memory, so the backing object is collectable and the pointer dangles. Keep the owner alive next to the pointer, or copy the bytes into C-owned memory"
+"guards.ToUnsafeEscape.return": "`return ... .to_unsafe` hands out a raw pointer into the GC heap: once the owner is unreachable, the collector can free the bytes and the caller's pointer dangles. Return the String/Slice itself, or copy the bytes into C-owned memory"
+"guards.UncheckedLibPointer.main": "`%{call}.value` dereferences the pointer returned by `%{lib}.%{fun}` on the spot: a C fun returning `T*` can return NULL — capture it and check first (`if ptr = %{lib}.%{fun}(...)`)"
+"guards.UncheckedLibPointer.stored": "`%{var}.value` dereferences the pointer `%{var}` got from `%{assign}` at line %{line} without a null check in between: a C fun returning `T*` can return NULL — `if %{var}` / `%{var}.nil?` first"
+"guards.UnpinnedLibCallback.boxed": "`%{box}` passed inline to `%{call}`: the box is GC-managed and unreferenced once the call returns — if the library stores the pointer, the box can be collected and the later `Box.unbox` from C is a use-after-free. Keep the box in a constant or class variable and pass that"
+"guards.UnpinnedLibCallback.main": "closure passed inline to `%{call}`: if the library stores it, nothing on the Crystal side references the proc once the call returns, and the GC may free it — the next callback from C is a use-after-free. Assign the proc to a constant or class variable and pass that (or pin it with `GC.add_root`)"
+"guards.UnusedIndex.main": "Block index '%{index}' is never used; plain `each` does the same job and skips the index bookkeeping"

@@ -88,9 +88,8 @@ class Awesome::Guards::MemoryLeak < Awesome::Guard
       issues << Awesome::Issue.new(
         hit.source.path,
         "MemoryLeak",
-        "`#{hit.lib}.#{hit.fun}` #{hit.owner} allocates C heap memory, but " \
-        "`#{hit.lib}.#{deallocators.first}` is never called in the project: " \
-        "pair C allocations with a free (e.g. in `#finalize` or `#close`)",
+        Awesome::I18n.t("guards.MemoryLeak.main",
+          lib: hit.lib, fun: hit.fun, owner: hit.owner, free: deallocators.first),
         hit.location,
         hit.source.excerpt_at(hit.location.try(&.line_number) || 0)
       )

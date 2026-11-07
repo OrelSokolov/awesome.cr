@@ -101,9 +101,8 @@ class Awesome::Guards::NilableStructField < Awesome::Guard
         @issues << Awesome::Issue.new(
           @source.path,
           "NilableStructField",
-          "Field '#{name}' is a nilable union: #{nilable_size} bytes instead of " \
-          "#{payload_size} plus a branch on every access; prefer a sentinel " \
-          "value or a separate Bool flag",
+          Awesome::I18n.t("guards.NilableStructField.main",
+            field: name, size: nilable_size, payload: payload_size),
           type.location,
           @source.excerpt_at(type.location.try(&.line_number) || 0)
         )

@@ -23,9 +23,9 @@
 # `pointerof` passed to fire-and-forget funs (`LibFoo.fill(ptr, n)`)
 # is the intended use and never fires.
 class Awesome::Guards::PointerOfEscape < Awesome::Guard
-  KIND     = "memory"
-  LEVEL    = "senior"    # on by default: attention marker, not a bug
-  SEVERITY = "style"     # suspicion — the owner may well be immortal
+  KIND              = "memory"
+  LEVEL             = "senior" # on by default: attention marker, not a bug
+  SEVERITY          = "style"  # suspicion — the owner may well be immortal
   SHORT_DESCRIPTION = <<-TEXT
     Checks that `pointerof(x)` doesn't reach a storing lib fun or a
     field. The address is stable (Boehm doesn't move objects), but its
@@ -90,12 +90,8 @@ class Awesome::Guards::PointerOfEscape < Awesome::Guard
         node.args.each do |arg|
           next unless arg.is_a?(Crystal::PointerOf)
           report(arg,
-            "`#{arg}` passed to `#{obj}.#{node.name}`: the address is " \
-            "stable but its owner is GC-managed and invisible to C — " \
-            "once the owner is collected, the library writes through a " \
-            "dangling pointer. Pass a value C copies, use a Box kept " \
-            "alive (see UnpinnedLibCallback), or malloc the memory and " \
-            "own it explicitly")
+            Awesome::I18n.t("guards.PointerOfEscape.main",
+              expr: arg, lib: obj, fun: node.name))
         end
       end
       true
@@ -107,11 +103,7 @@ class Awesome::Guards::PointerOfEscape < Awesome::Guard
                                       Crystal::Path) &&
          (value = node.value).is_a?(Crystal::PointerOf)
         report(value,
-          "`#{target} = #{value}` pins the address but not its owner: " \
-          "the object holding the variable is GC-managed and the field " \
-          "keeps only the raw address — after a collection the pointer " \
-          "dangles. Keep the owner alive next to the field, or malloc " \
-          "the memory and own it explicitly")
+          Awesome::I18n.t("guards.PointerOfEscape.assign", target: target, value: value))
       end
       true
     end
