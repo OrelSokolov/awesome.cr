@@ -20,91 +20,10 @@
 # one entry whose def lists span all of them (the first declaration
 # keeps origin/superclass/decl), so per-project guards see the whole
 # type, not the last fragment of it.
+#
+# The entry type and the collecting visitor live beside this file, one
+# class per file: index/type_entry.cr, index/visitor.cr.
 class Awesome::Index
-  # One indexed type (class, struct or module) as written.
-  class TypeEntry
-    # Where the type was written — path and location always travel
-    # together (bundled so the constructor stays under LongParameterList).
-    record Origin, path : String, location : Crystal::Location?
-
-    getter qualified_name : String # nesting stack + written name
-    # Superclass path as written (a Generic parent stripped to its
-    # name, leading `::` dropped); nil for Object / no parent / modules.
-    getter superclass : String?
-    # Module names as written in `include` clauses (`include Store`
-    # records "Store") — the module half of an abstraction seam, next
-    # to `superclass` for the class half.
-    getter included_modules : Array(String)
-    getter def_names : Array(String)
-    # Names of `abstract def`s — contracts to be overridden, distinct
-    # from concrete defs (guards that compare implementations exclude
-    # these; SubclassNoOverride keeps counting them).
-    getter abstract_def_names : Array(String)
-    getter origin : Origin
-    # The ClassDef/ModuleDef the type was declared with — kept as
-    # written, so guards can ask how it was declared (abstract, module,
-    # struct) without duplicating that in flags here. For a reopened
-    # type this is the first declaration (reopenings can't change how a
-    # type was declared).
-    getter decl : Crystal::ClassDef | Crystal::ModuleDef
-
-    def initialize(@qualified_name : String, @superclass : String?,
-                   @decl : Crystal::ClassDef | Crystal::ModuleDef,
-                   @included_modules : Array(String),
-                   @def_names : Array(String),
-                   @abstract_def_names : Array(String), @origin : Origin)
-    end
-
-    def abstract? : Bool
-      decl = @decl
-      decl.is_a?(Crystal::ClassDef) && decl.abstract?
-    end
-
-    def module? : Bool
-      @decl.is_a?(Crystal::ModuleDef)
-    end
-
-    # Value types carry data, not collaborators — a `struct Foo` entry
-    # is data plumbing, not a dependency candidate.
-    def struct? : Bool
-      decl = @decl
-      decl.is_a?(Crystal::ClassDef) && decl.struct?
-    end
-
-    def last_segment : String
-      @qualified_name.split("::").last
-    end
-
-    def path : String
-      @origin.path
-    end
-
-    def location : Crystal::Location?
-      @origin.location
-    end
-
-    def line : Int32
-      location.try(&.line_number) || 0
-    end
-
-    # Folds a reopening into this entry: def names merge (a method list
-    # spanning files is one list), while the first declaration keeps
-    # origin, superclass and decl — a reopening can't change those
-    # (the compiler rejects a superclass mismatch).
-    def merge_reopening!(other : TypeEntry) : Nil
-      other.def_names.each do |name|
-        @def_names << name unless @def_names.includes?(name)
-      end
-      other.abstract_def_names.each do |name|
-        @abstract_def_names << name unless @abstract_def_names.includes?(name)
-      end
-      other.included_modules.each do |name|
-        @included_modules << name unless @included_modules.includes?(name)
-      end
-      @superclass ||= other.superclass
-    end
-  end
-
   getter entries : Array(TypeEntry)
 
   @by_name : Hash(String, TypeEntry)
@@ -181,68 +100,6 @@ class Awesome::Index
       end
     else
       subclasses_of(entry)
-    end
-  end
-
-  # Walks one source, registering a TypeEntry per ClassDef/ModuleDef
-  # with the file's naming stack as its qualified name, and attaching
-  # def names (regular and `abstract def`) to the innermost type.
-  private class Visitor < Crystal::Visitor
-    @nesting = [] of TypeEntry # innermost type last
-
-    def initialize(@index : Index, @path : String)
-    end
-
-    def visit(node : Crystal::ClassDef)
-      push(node, superclass_of(node))
-      true
-    end
-
-    def visit(node : Crystal::ModuleDef)
-      push(node, nil)
-      true
-    end
-
-    def visit(node : Crystal::Include)
-      @nesting.last?.try { |entry| entry.included_modules << node.name.to_s }
-      true
-    end
-
-    def end_visit(node : Crystal::ClassDef | Crystal::ModuleDef)
-      @nesting.pop
-    end
-
-    def visit(node : Crystal::Def)
-      if entry = @nesting.last?
-        entry.def_names << node.name
-        entry.abstract_def_names << node.name if node.abstract?
-      end
-      true
-    end
-
-    def visit(node : Crystal::ASTNode)
-      true
-    end
-
-    private def push(node : Crystal::ClassDef | Crystal::ModuleDef,
-                     superclass : String?) : Nil
-      names = @nesting.map(&.qualified_name) << node.name.to_s
-      entry = TypeEntry.new(names.join("::"), superclass, node,
-        [] of String, [] of String, [] of String,
-        TypeEntry::Origin.new(@path, node.location))
-      # add() folds a reopening into the canonical entry and hands it
-      # back — defs written in this reopening attach to that one.
-      @nesting << @index.add(entry)
-    end
-
-    # Superclass path as a plain string: `Base(T)` keeps only `Base` —
-    # type vars never matter for hierarchy checks.
-    private def superclass_of(node : Crystal::ClassDef) : String?
-      case parent = node.superclass
-      when Crystal::Generic then parent.name.to_s.lchop("::")
-      when Crystal::Path    then parent.to_s.lchop("::")
-      else                       parent.try &.to_s
-      end
     end
   end
 end

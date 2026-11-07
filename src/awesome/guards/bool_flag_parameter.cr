@@ -21,7 +21,7 @@
 # `default` — it carries a value, not a branch (config readers pass
 # both literals legitimately).
 class Awesome::Guards::BoolFlagParameter < Awesome::Guard
-  KIND = "code"
+  KIND              = "code"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for Bool parameters that call sites feed with both literal
     true and literal false — a method doing two jobs, named by its
@@ -99,90 +99,6 @@ class Awesome::Guards::BoolFlagParameter < Awesome::Guard
     index : Int32, location : Crystal::Location? do
     def line : Int32
       @location.try(&.line_number) || 0
-    end
-  end
-
-  # Cross-file evidence: Bool-restricted parameters of named defs,
-  # def-name counts (for the ambiguity skip), and literal Bool
-  # arguments at call sites — positional keyed by index, named by
-  # parameter name, both keyed by method name.
-  class Evidence
-    getter bool_params = [] of BoolParam
-    @def_counts = Hash(String, Int32).new(0)
-    @positional = {} of String => Array({Int32, Bool})
-    @named = {} of String => Array({String, Bool})
-
-    def defs_named(method_name : String) : Int32
-      @def_counts[method_name]
-    end
-
-    def literals_for(method_name : String, index : Int32, param_name : String) : Set(Bool)
-      seen = Set(Bool).new
-      @positional[method_name]?.try &.each { |(i, v)| seen << v if i == index }
-      @named[method_name]?.try &.each { |(n, v)| seen << v if n == param_name }
-      seen
-    end
-
-    def add_def(method_name : String) : Nil
-      @def_counts[method_name] += 1
-    end
-
-    def add_bool_param(param : BoolParam) : Nil
-      @bool_params << param
-    end
-
-    def add_positional(method_name : String, index : Int32, value : Bool) : Nil
-      (@positional[method_name] ||= [] of {Int32, Bool}) << {index, value}
-    end
-
-    def add_named(method_name : String, param_name : String, value : Bool) : Nil
-      (@named[method_name] ||= [] of {String, Bool}) << {param_name, value}
-    end
-  end
-
-  # One visitor per source, appending into the shared Evidence: def
-  # params and call-site literals land in the same tables whatever
-  # file they come from.
-  private class Visitor < Crystal::Visitor
-    def initialize(@path : String, @evidence : Evidence)
-    end
-
-    def visit(node : Crystal::Def)
-      @evidence.add_def(node.name)
-      return true if node.receiver || node.name == "initialize" || operator?(node.name)
-
-      node.args.each_with_index do |arg, index|
-        next unless bool_restricted?(arg)
-        @evidence.add_bool_param(BoolParam.new(@path, node.name, arg.name, index, node.location))
-      end
-      true
-    end
-
-    def visit(node : Crystal::Call)
-      node.args.each_with_index do |arg, index|
-        if arg.is_a?(Crystal::BoolLiteral)
-          @evidence.add_positional(node.name, index, arg.value)
-        end
-      end
-      node.named_args.try &.each do |named|
-        if value = named.value.as?(Crystal::BoolLiteral)
-          @evidence.add_named(node.name, named.name, value.value)
-        end
-      end
-      true
-    end
-
-    def visit(node : Crystal::ASTNode)
-      true
-    end
-
-    private def bool_restricted?(arg : Crystal::Arg) : Bool
-      restriction = arg.restriction
-      restriction.is_a?(Crystal::Path) && restriction.to_s == "Bool"
-    end
-
-    private def operator?(name : String) : Bool
-      !name.matches?(/\A[a-z_]\w*[?!]?\z/)
     end
   end
 end

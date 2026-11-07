@@ -1,24 +1,7 @@
 require "./spec_helper"
+require "./support/empty_guard"
+require "./support/project_probe_guard"
 require "file_utils"
-
-# Guards defined for this spec only: an empty one (no overrides — the
-# base defaults must report nothing) and a probe recording its
-# per-project call. The probe registers itself only around the
-# assertions that need it and unregisters in ensure, so the rest of the
-# suite never sees it.
-class EmptyGuard < Awesome::Guard
-  KIND = "code"
-end
-
-class ProjectProbeGuard < Awesome::Guard
-  KIND = "code"
-  class_property calls = [] of Array(String)
-
-  def test_project(sources : Array(Awesome::Source), config : Awesome::GuardConfig) : Array(Awesome::Issue)
-    @@calls << sources.map(&.path)
-    [] of Awesome::Issue
-  end
-end
 
 describe "per-project pass" do
   it "base guard defaults report nothing" do

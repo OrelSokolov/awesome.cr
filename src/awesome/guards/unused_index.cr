@@ -9,7 +9,7 @@
 # Convention-aware: an index named `_` (or `_something`) is treated as
 # intentionally unused and not flagged — that's already idiomatic.
 class Awesome::Guards::UnusedIndex < Awesome::Guard
-  KIND = "speed"
+  KIND              = "speed"
   SHORT_DESCRIPTION = <<-TEXT
     Checks for `each_with_index` blocks whose index parameter is never
     used in the block body — plain `each` does the same job and skips
@@ -33,60 +33,6 @@ class Awesome::Guards::UnusedIndex < Awesome::Guard
     visitor = Visitor.new(source)
     source.ast.try &.accept(visitor)
     visitor.issues
-  end
-
-  private class Visitor < Crystal::Visitor
-    getter issues = [] of Awesome::Issue
-
-    def initialize(@source : Awesome::Source)
-    end
-
-    def visit(node : Crystal::Call)
-      if node.name == "each_with_index" && (block = node.block) &&
-         block.args.size == 2
-        index = block.args[1]
-        unless index.name.empty? || index.name.starts_with?('_') ||
-               UsesVar.new(index.name).used?(block.body)
-          @issues << Awesome::Issue.new(
-            @source.path,
-            "UnusedIndex",
-            Awesome::I18n.t("guards.UnusedIndex.main", index: index.name),
-            node.location,
-            @source.excerpt_at(node.location.try(&.line_number) || 0)
-          )
-        end
-      end
-      true
-    end
-
-    # Fallback: redefining `visit` in a subclass replaces the base
-    # class's overloads, so re-enable traversal for everything else.
-    def visit(node : Crystal::ASTNode)
-      true
-    end
-  end
-
-  # Whether a variable with the given name appears anywhere in an AST.
-  private class UsesVar < Crystal::Visitor
-    def initialize(@name : String)
-      @found = false
-    end
-
-    def used?(node : Crystal::ASTNode) : Bool
-      node.accept(self)
-      @found
-    end
-
-    def visit(node : Crystal::Var)
-      @found = true if node.name == @name
-      false
-    end
-
-    # Fallback: redefining `visit` in a subclass replaces the base
-    # class's overloads, so re-enable traversal for everything else.
-    def visit(node : Crystal::ASTNode)
-      true
-    end
   end
 end
 
