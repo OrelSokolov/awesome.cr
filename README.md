@@ -38,6 +38,7 @@ $ awesome                 # check the current directory (all guards)
 $ awesome speed           # speed guards only
 $ awesome memory src lib/ # memory guards on specific paths
 $ awesome code src/       # code guards only
+$ awesome allocations src/ # line-by-line allocation report
 $ awesome --level psycho  # micro-optimization guards too (readability be damned)
 $ awesome src foo.cr      # check specific paths
 $ awesome doc             # documentation for all guards
@@ -112,6 +113,53 @@ guards:
     enabled: true
     check_extern: false
 ```
+
+## Allocation report
+
+`awesome allocations [paths]` is not a guard — it prints a
+line-by-line **allocation report** of the code, every line colored:
+
+- **red** — the line allocates: an allocation construct sits on it
+  (`[1, 2]`, `"a#{b}"`, `Foo.new`, `LibC.malloc`, `xs.map { … }`,
+  io-less `to_s` …), or it calls a method that (transitively)
+  allocates. The `def` line of an allocating method is red too, even
+  though clean lines inside its body stay green.
+- **green** — provably allocation-free: no allocation construct and
+  no call whose target is unknown or allocating.
+- **gray** — **undefined**: a call whose target is outside the scope
+  (the stdlib, a shard). We honestly don't know what it does — it
+  needs investigation, so neither red nor green is claimed.
+
+```console
+$ awesome allocations src/
+$ awesome allocations --scope file src/   # same-file resolution only
+```
+
+Two scopes:
+
+| Scope | Calls resolve against | Use |
+|---|---|---|
+| `project` (default) | defs from every collected file | the accurate whole-project report |
+| `file` | defs from the same file only | the quick first pass: a call into another file of the same project is gray here |
+
+Resolution is syntactic (by method name, like the per-project guards):
+overloads written in the project merge — if any of them allocates,
+the call is red. Recursion is a fixpoint over the call graph, so
+cycles converge: two clean methods calling each other stay green, an
+allocation anywhere in a cycle reddens the whole cycle. Bare
+identifiers and operators (`a + b`, `n * 2`) are ordinary calls to
+the analyzer — `String#+` genuinely allocates, so on an unknown
+receiver they are gray, not green.
+
+Conservative by design: **red means "allocates or may allocate"**
+(`Bar.new` cannot be told from a stack struct syntactically), green
+means "provably does not". String literals are green — the compiler
+deduplicates them into static data (an interpolation, not a literal,
+is what allocates); tuples, named tuples and ranges are stack/struct
+values. Not modeled: closures (`->` / proc literals may capture and
+allocate) and macros (bodies are skipped; macro *calls* go gray).
+When the output is piped and colors drop, each line gets a text
+mark: `R` red, `?` gray, blank green.
 
 ## Languages
 

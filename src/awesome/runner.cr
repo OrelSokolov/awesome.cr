@@ -50,15 +50,22 @@ class Awesome::Runner
   end
 
   private def collect_files(paths : Array(String)) : Array(String)
+    self.class.collect_files(@config, paths)
+  end
+
+  # File collection shared by guard runs and the `allocations` report:
+  # explicit paths (directories walked for *.cr), otherwise the
+  # config's includes; the config's excludes apply in both cases.
+  def self.collect_files(config : Config, paths : Array(String)) : Array(String)
     files = if paths.empty?
-              @config.includes.flat_map { |g| Dir.glob(g) }
+              config.includes.flat_map { |g| Dir.glob(g) }
                 .select { |f| File.file?(f) }
             else
               paths.flat_map do |p|
                 File.directory?(p) ? Dir["#{p.rstrip('/')}/**/*.cr"] : [p]
               end.select { |f| File.file?(f) }
             end
-    excluded = @config.excludes.flat_map { |g| Dir.glob(g) }
+    excluded = config.excludes.flat_map { |g| Dir.glob(g) }
     (files.uniq - excluded).sort
   end
 end

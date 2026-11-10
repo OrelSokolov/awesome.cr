@@ -7,11 +7,12 @@ require "colorize"
 #   awesome speed src foo.cr # check paths with speed guards only
 #   awesome memory lib/      # check paths with memory guards only
 #   awesome code src/        # check paths with code guards only
+#   awesome allocations src/ # line-by-line allocation report
 #   awesome --level psycho   # opt into micro-optimization guards too
 #   awesome doc [GUARD]      # show guard documentation
 #   awesome guards           # list registered guards — total, by level and kind
 module Awesome::CLI
-  COMMANDS = {"doc", "speed", "memory", "code", "guards"}
+  COMMANDS = {"doc", "speed", "memory", "code", "allocations", "guards"}
 
   def self.run(args : Array(String) = ARGV) : Int32
     argv = args.dup
@@ -25,7 +26,7 @@ module Awesome::CLI
 
     paths = [] of String
     config_path = nil
-    only = except = level = lang = nil
+    only = except = level = lang = scope = nil
     finished = false
     code = 0
 
@@ -39,6 +40,7 @@ module Awesome::CLI
       p.on("--only A,B", Awesome::I18n.t("cli.opt.only")) { |v| only = split_list(v) }
       p.on("--except A,B", Awesome::I18n.t("cli.opt.except")) { |v| except = split_list(v) }
       p.on("--lang LOCALE", Awesome::I18n.t("cli.opt.lang", languages: Awesome::I18n::LOCALES.join(", "), default: Awesome::I18n::DEFAULT_LOCALE)) { |v| lang = v }
+      p.on("--scope NAME", Awesome::I18n.t("cli.opt.scope", scopes: Awesome::Allocations::SCOPES.join(", "), default: Awesome::Allocations::SCOPES.last)) { |v| scope = v }
       p.on("-v", "--version", "Show version") do
         STDOUT << "awesome " << Awesome::VERSION << '\n'
         finished = true
@@ -58,14 +60,18 @@ module Awesome::CLI
     if lang && !Awesome::I18n::LOCALES.includes?(lang)
       return usage_error(Awesome::I18n.t("cli.errors.unknown_lang", lang: lang, available: Awesome::I18n::LOCALES.join(", ")), parser)
     end
+    if scope && !Awesome::Allocations::SCOPES.includes?(scope)
+      return usage_error(Awesome::I18n.t("cli.errors.unknown_scope", scope: scope, available: Awesome::Allocations::SCOPES.join(", ")), parser)
+    end
 
     Awesome::I18n.locale = Awesome::I18n.resolve(lang)
     paths = argv
 
     case command
-    when "doc"    then doc(paths)
-    when "guards" then guards_reference
-    else               check(paths, config_path, only, except, command, level)
+    when "doc"        then doc(paths)
+    when "guards"     then guards_reference
+    when "allocations" then allocations_report(paths, config_path, scope)
+    else                   check(paths, config_path, only, except, command, level)
     end
   end
 
@@ -90,6 +96,65 @@ module Awesome::CLI
     report = Runner.new(config, only, except, kind, level).run(paths)
     print_report(report)
     report.awesome? ? 0 : 1
+  rescue ex : YAML::ParseException
+    STDERR << "awesome: " << Awesome::I18n.t("cli.errors.config_parse", message: ex.message) << '\n'
+    2
+  end
+
+  # `awesome allocations [paths] [--scope file|project]` — the
+  # line-by-line allocation report (see Awesome::Allocations). Not a
+  # guard run: it prints a colored listing, not issues, and always
+  # exits 0 — a report to read, not a verdict.
+  def self.allocations_report(paths : Array(String), config_path : String?, scope : String?) : Int32
+    scope = Awesome::Allocations::SCOPES.last unless scope
+    config = Config.load(config_path)
+    if config.lang && !Awesome::I18n::LOCALES.includes?(config.lang)
+      STDERR << "awesome: " << Awesome::I18n.t("cli.errors.unknown_lang_config",
+        lang: config.lang, available: Awesome::I18n::LOCALES.join(", ")) << '\n'
+      return 2
+    end
+    Awesome::I18n.locale = (config.lang || Awesome::I18n.locale)
+    files = Runner.collect_files(config, paths)
+    reports = Awesome::Allocations.analyze(files.map { |f| Source.new(f) }, scope)
+
+    # On a terminal the color says it; when piped (colors stripped) a
+    # plain-text status mark keeps the report readable.
+    tty = STDOUT.tty?
+    puts Awesome::I18n.t("allocations.legend")
+    puts
+    red = gray = green = 0
+    reports.each do |report|
+      r = report.count(Awesome::Allocations::Status::Red)
+      g = report.count(Awesome::Allocations::Status::Gray)
+      n = report.count(Awesome::Allocations::Status::Green)
+      red += r
+      gray += g
+      green += n
+      puts Awesome::I18n.t("allocations.header",
+        path: report.path, red: r, gray: g, green: n).colorize.bold
+      report.statuses.each_with_index do |status, i|
+        text = sprintf("%4d │ %s", i + 1, report.lines[i]? || "")
+        if tty
+          color = case status
+                  in Awesome::Allocations::Status::Red   then :light_red
+                  in Awesome::Allocations::Status::Gray  then :dark_gray
+                  in Awesome::Allocations::Status::Green then :light_green
+                  end
+          puts text.colorize(color)
+        else
+          mark = case status
+                 in Awesome::Allocations::Status::Red   then "R "
+                 in Awesome::Allocations::Status::Gray  then "? "
+                 in Awesome::Allocations::Status::Green then "  "
+                 end
+          puts "#{mark}#{text}"
+        end
+      end
+      puts
+    end
+    puts Awesome::I18n.t("allocations.summary",
+      files: reports.size, red: red, gray: gray, green: green)
+    0
   rescue ex : YAML::ParseException
     STDERR << "awesome: " << Awesome::I18n.t("cli.errors.config_parse", message: ex.message) << '\n'
     2

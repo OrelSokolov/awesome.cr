@@ -15,6 +15,7 @@
     awesome speed [paths]      Check paths with speed guards only
     awesome memory [paths]     Check paths with memory guards only
     awesome code [paths]       Check paths with code guards only
+    awesome allocations [paths] Line-by-line allocation report (red allocates, green is clean, gray is undefined)
     awesome doc [GUARD]        Show documentation for one or all guards
     awesome guards             List registered guards (total, by level and kind)
 
@@ -24,11 +25,13 @@
 "cli.opt.only": "Run only these guards"
 "cli.opt.except": "Run all but these guards"
 "cli.opt.lang": "Output language: %{languages} (default: from LANG, or %{default})"
+"cli.opt.scope": "allocations report: resolve calls within one file or the whole project: %{scopes} (default: %{default})"
 "cli.errors.unknown_option": "unknown option: %{option}"
 "cli.errors.missing_value": "missing value for %{option}"
 "cli.errors.unknown_level": "unknown level: %{level} (available: %{available})"
 "cli.errors.unknown_level_config": "unknown level in awesome.yml: %{level} (available: %{available})"
 "cli.errors.unknown_lang": "unknown language: %{lang} (available: %{available})"
+"cli.errors.unknown_scope": "unknown scope: %{scope} (available: %{available})"
 "cli.errors.unknown_lang_config": "unknown language in awesome.yml: %{lang} (available: %{available})"
 "cli.errors.no_such_guard": "no such guard: %{names}"
 "cli.errors.available": "Available: %{guards}"
@@ -44,6 +47,9 @@
 "report.summary": "%{inspected}, %{issues}"
 "report.awesome": "Your code is awesome."
 "report.awful": "Your code is awful: %{issues}."
+"allocations.legend": "red — the line allocates (directly or through a call; the def line of an allocating method is red too), green — provably no allocations, gray — undefined: the call target is outside the scope, needs further investigation"
+"allocations.header": "%{path} — %{red} red, %{gray} gray, %{green} green"
+"allocations.summary": "%{files} files: %{red} red, %{gray} gray, %{green} green lines"
 "source.skipping": "skipping %{path}: %{message}"
 "guards.LongParameterList.main.one": "%{label} takes %{count} parameter (threshold: %{threshold}) — bundle them into one concept or split the method"
 "guards.LongParameterList.main.other": "%{label} takes %{count} parameters (threshold: %{threshold}) — bundle them into one concept or split the method"

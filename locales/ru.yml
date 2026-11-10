@@ -11,6 +11,7 @@
     awesome speed [paths]      Только гарды скорости
     awesome memory [paths]     Только гарды памяти
     awesome code [paths]       Только гарды качества кода
+    awesome allocations [paths] Построчный отчёт об аллокациях (красные аллоцируют, зелёные чистые, серые неопределённые)
     awesome doc [GUARD]        Документация одного гарда или всех сразу
     awesome guards             Список зарегистрированных гардов (всего, по уровням и видам)
 
@@ -20,11 +21,13 @@
 "cli.opt.only": "Запустить только эти гарды"
 "cli.opt.except": "Запустить все, кроме этих гардов"
 "cli.opt.lang": "Язык сообщений: %{languages} (по умолчанию: из переменной LANG, иначе %{default})"
+"cli.opt.scope": "отчёт allocations: разгадывать вызовы в пределах одного файла или всего проекта: %{scopes} (по умолчанию: %{default})"
 "cli.errors.unknown_option": "неизвестная опция: %{option}"
 "cli.errors.missing_value": "не хватает значения для %{option}"
 "cli.errors.unknown_level": "неизвестный уровень: %{level} (доступны: %{available})"
 "cli.errors.unknown_level_config": "неизвестный уровень в awesome.yml: %{level} (доступны: %{available})"
 "cli.errors.unknown_lang": "неизвестный язык: %{lang} (доступны: %{available})"
+"cli.errors.unknown_scope": "неизвестный scope: %{scope} (доступны: %{available})"
 "cli.errors.unknown_lang_config": "неизвестный язык в awesome.yml: %{lang} (доступны: %{available})"
 "cli.errors.no_such_guard": "нет такого гарда: %{names}"
 "cli.errors.available": "Доступны: %{guards}"
@@ -43,6 +46,9 @@
 "report.summary": "%{inspected}, найдено %{issues}"
 "report.awesome": "Ваш код — awesome."
 "report.awful": "Ваш код — awful: %{issues}."
+"allocations.legend": "красные строки — аллоцируют (сами или через вызов; строка def аллоцирующего метода тоже красная), зелёные — доказанно без аллокаций, серые — undefined: цель вызова вне scope, нужно дальнейшее исследование"
+"allocations.header": "%{path} — красных %{red}, серых %{gray}, зелёных %{green}"
+"allocations.summary": "файлов %{files}: красных строк %{red}, серых %{gray}, зелёных %{green}"
 "source.skipping": "пропускаю %{path}: %{message}"
 "guards.LongParameterList.main.one": "%{label} принимает %{count} параметр (порог: %{threshold}) — сверните их в одно понятие или разбейте метод"
 "guards.LongParameterList.main.few": "%{label} принимает %{count} параметра (порог: %{threshold}) — сверните их в одно понятие или разбейте метод"
